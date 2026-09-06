@@ -142,28 +142,9 @@ export class NativeWindowHost implements WindowHost {
   }
 
   private resolveElectronLaunchCommand(): { command: string; argsPrefix: string[]; useShell: boolean } {
-    let electronBin: string = '';
-    try {
-      const resolved = require('electron');
-      if (typeof resolved === 'string' && fs.existsSync(resolved)) {
-        electronBin = resolved;
-      }
-    } catch {
-      // Monorepo fallback: traverse up to root node_modules
-      electronBin = path.resolve(__dirname, '../../../../node_modules/electron/dist/electron.exe');
-    }
-
-    if (!electronBin || !fs.existsSync(electronBin)) {
-      const candidates = [
-        path.resolve(__dirname, '../../../../node_modules/electron/dist/electron.exe'),
-        path.resolve(__dirname, '../../../node_modules/electron/dist/electron.exe'),
-        path.resolve(__dirname, '../../node_modules/electron/dist/electron.exe'),
-        path.resolve(__dirname, '../node_modules/electron/dist/electron.exe'),
-        path.resolve(process.cwd(), 'node_modules', 'electron', 'dist', 'electron.exe'),
-        path.resolve(process.cwd(), '..', '..', '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
-        'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\node_modules\\electron\\dist\\electron.exe',
-      ];
-      electronBin = candidates.find((p) => fs.existsSync(p)) || '';
+    let electronBin = 'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\node_modules\\electron\\dist\\electron.exe';
+    if (!fs.existsSync(electronBin)) {
+      try { electronBin = require('electron'); } catch (_) { electronBin = 'electron'; }
     }
 
     if (electronBin && fs.existsSync(electronBin)) {
