@@ -219,21 +219,38 @@ export class NativeWindowHost implements WindowHost {
     const electronExe = this.resolveElectronBinary();
     const shellScript = path.resolve(shellScriptPath);
 
-    // 2. Format a single command line string with quoted arguments to avoid DEP0190 and EINVAL
-    const fullCommand = `"${electronExe}" "${shellScript}" "${safeUrl}" "${width || 1180}" "${height || 780}" "${appId || ''}"`;
+    // 2. Prepare argument array
+    const args = [
+      shellScript,
+      safeUrl,
+      String(width || 1180),
+      String(height || 780),
+      String(appId),
+    ];
 
-    // 3. Spawn detached process without passing an args array
+    // 3. Spawn detached process using execFile directly without shell
     let child: child_process.ChildProcess | undefined;
     try {
-      child = child_process.spawn(fullCommand, {
-        shell: true,
-        detached: isDetached,
-        stdio: 'ignore',
-        windowsHide: false,
+      child = (child_process.execFile as any)(
+        electronExe,
+        args,
+        {
+          detached: isDetached,
+          windowsHide: false,
+        },
+        (err: Error | null) => {
+          if (err) {
+            console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
+          }
+        }
+      );
+
+      child?.on('error', (err) => {
+        console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
       });
     } catch (err: any) {
       throw new Error(
-        `[ELIX NativeWindowHost] Failed to spawn Electron process for '${appId}': ${err.message}. Microsoft Edge and browser fallbacks have been permanently disabled.`
+        `[ELIX NativeWindowHost] Failed to start Electron process for '${appId}': ${err.message}. Microsoft Edge and browser fallbacks have been permanently disabled.`
       );
     }
 
@@ -523,5 +540,54 @@ export function broadcastEvent(eventData: Record<string, any>): void {
   }
   console.log(`[IPC] Broadcasting event to ${wss.getClientCount()} client(s):`, eventData.tool || eventData.type);
   wss.broadcast(eventData);
+}
+
+/**
+ * Standalone helper to launch a native Electron window using execFile directly
+ */
+export function launchNativeWindow(targetUrl: string, width = 1180, height = 780, appId = ''): void {
+  let electronExe: string;
+  try {
+    const electronMod = require('electron');
+    electronExe = typeof electronMod === 'string' ? electronMod : (electronMod as any).default || electronMod;
+  } catch {
+    electronExe = 'electron';
+  }
+
+  const candidates = [
+    path.resolve(process.cwd(), 'native-shell.cjs'),
+    path.resolve(process.cwd(), 'src/native-shell.cjs'),
+    path.resolve(__dirname, 'native-shell.cjs'),
+    path.resolve(__dirname, '../native-shell.cjs'),
+  ];
+  const shellScript = candidates.find((p) => fs.existsSync(p)) || path.resolve(__dirname, 'native-shell.cjs');
+
+  const args = [
+    shellScript,
+    targetUrl,
+    String(width),
+    String(height),
+    String(appId),
+  ];
+
+  const child = (child_process.execFile as any)(
+    electronExe,
+    args,
+    {
+      detached: true,
+      windowsHide: false,
+    },
+    (err: Error | null) => {
+      if (err) {
+        console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
+      }
+    }
+  );
+
+  child?.on('error', (err: any) => {
+    console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
+  });
+
+  child?.unref();
 }
 

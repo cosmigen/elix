@@ -360,6 +360,6 @@ export class MockWindowHost implements WindowHost {
   }
 }
 
-export { NativeWindowHost, type NativeWindowHostOptions, broadcastToWindows, broadcastEvent, ensureIpcServer } from '../native-window-host.js';
+export { NativeWindowHost, type NativeWindowHostOptions, broadcastToWindows, broadcastEvent, ensureIpcServer, launchNativeWindow } from '../native-window-host.js';
 
 
