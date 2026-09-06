@@ -1,0 +1,152 @@
+{
+  "id": "com.elix.files",
+  "name": "ELIX Files",
+  "version": "1.0.0",
+  "description": "Modern high-performance file manager and storage navigator with quick preview, archive utilities, and AI tool bindings for ELIX OS",
+  "author": {
+    "name": "ELIX Core Team",
+    "email": "dev@elix.os",
+    "url": "https://elix.os"
+  },
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "window": {
+    "width": 1080,
+    "height": 720,
+    "minWidth": 780,
+    "minHeight": 540,
+    "resizable": true,
+    "alwaysOnTop": false,
+    "frame": false,
+    "transparent": true,
+    "center": true,
+    "backgroundColor": "#0b1120"
+  },
+  "permissions": [
+    "fs:read",
+    "fs:write",
+    "ui:notification",
+    "ui:dialog",
+    "clipboard:read",
+    "clipboard:write"
+  ],
+  "capabilities": {
+    "list_directory": {
+      "name": "list_directory",
+      "description": "List files and subdirectories with sorting, hidden file toggles, and metadata summaries.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Directory path to enumerate"
+          },
+          "showHidden": {
+            "type": "boolean",
+            "description": "Whether to include hidden files (starting with dot)"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": ["name", "size", "modified", "type"],
+            "description": "Sort order criterion"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "permissions": []
+    },
+    "search_files": {
+      "name": "search_files",
+      "description": "Perform fuzzy and recursive file search across directory trees with extension filters.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search pattern or filename keyword"
+          },
+          "rootDirectory": {
+            "type": "string",
+            "description": "Root directory path to start searching from"
+          },
+          "fileTypeFilter": {
+            "type": "string",
+            "description": "Optional file extension filter (e.g. '.ts', '.png', '.json')"
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "Whether to traverse child directories recursively"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "permissions": []
+    },
+    "inspect_file_metadata": {
+      "name": "inspect_file_metadata",
+      "description": "Inspect detailed file system metadata (size, MIME type, POSIX permissions, birth/mod times).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "targetPath": {
+            "type": "string",
+            "description": "Absolute or relative file path to inspect"
+          }
+        },
+        "required": [
+          "targetPath"
+        ]
+      },
+      "permissions": []
+    },
+    "manage_archive": {
+      "name": "manage_archive",
+      "description": "Compress files/folders into a ZIP archive or extract archives with directory traversal protection.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["compress", "extract"],
+            "description": "Archive operation to execute"
+          },
+          "sourcePaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of source file or directory paths"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Destination archive or extraction folder path"
+          }
+        },
+        "required": [
+          "action",
+          "sourcePaths",
+          "destinationPath"
+        ]
+      },
+      "permissions": []
+    },
+    "get_storage_breakdown": {
+      "name": "get_storage_breakdown",
+      "description": "Query storage utilization breakdown across drives, document caches, and partitions.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "drivePath": {
+            "type": "string",
+            "description": "Optional target mount point or drive letter"
+          }
+        }
+      },
+      "permissions": []
+    }
+  }
+}

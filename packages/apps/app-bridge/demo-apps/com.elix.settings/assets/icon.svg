@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="settings-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111a2d" />
+      <stop offset="100%" stop-color="#080c16" />
+    </linearGradient>
+    <linearGradient id="settings-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#settings-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- Settings Cog Icon -->
+  <circle cx="24" cy="24" r="5" fill="none" stroke="url(#settings-accent-grad)" stroke-width="2.5" />
+  <path d="M24 10 L24 14 M24 34 L24 38 M10 24 L14 24 M34 24 L38 24 M14.1 14.1 L17 17 M31 31 L33.9 33.9 M14.1 33.9 L17 31 M31 17 L33.9 14.1" stroke="url(#settings-accent-grad)" stroke-width="2.5" stroke-linecap="round" />
+</svg>

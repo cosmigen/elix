@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIX Notes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+    }
+    .titlebar {
+      height: 42px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .titlebar span { font-size: 13px; font-weight: 600; color: #94a3b8; }
+
+    /* Segmented Deep-Navy Capsule Frame */
+    .liquid-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
+      padding: 0 4px;
+      background: linear-gradient(180deg, #182844 0%, #101c33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      -webkit-app-region: no-drag;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* Subtle Vertical Dividers */
+    .liquid-divider {
+      width: 1px;
+      height: 18px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.07) 30%, 
+        rgba(0, 0, 0, 0.4) 70%, 
+        transparent 100%
+      );
+    }
+
+    /* Action Buttons (Zero Background, Focus on Glyph) */
+    .liquid-btn {
+      position: relative;
+      width: 34px;
+      height: 30px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* Liquid Metal Glyphs Base State */
+    .liquid-glyph {
+      width: 22px;
+      height: 22px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      transition: filter 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Controlled, Soft Luminescence On Hover (Glyph Only) */
+    .liquid-btn:hover .liquid-glyph {
+      transform: scale(1.08);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(186, 215, 255, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    /* Soft Crimson/Rose Accent for Close Button Hover */
+    .liquid-btn.btn-close:hover .liquid-glyph {
+      transform: scale(1.08) rotate(4deg);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 120, 140, 0.75))
+        drop-shadow(0 0 10px rgba(244, 63, 94, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    /* Tactile Click Physics */
+    .liquid-btn:active .liquid-glyph {
+      transform: scale(0.92);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+    }
+
+    .main-container { display: flex; flex: 1; height: calc(100vh - 72px); }
+    .sidebar {
+      width: 250px;
+      background: #111827;
+      border-right: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+    }
+    .search-row { display: flex; gap: 6px; }
+    .search-input {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+    .search-input:focus { border-color: #38bdf8; }
+    .btn-add {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      border-radius: 6px;
+      width: 32px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .notes-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .note-card {
+      padding: 10px;
+      background: #1e293b;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: 0.15s ease;
+    }
+    .note-card.active, .note-card:hover { border-color: #38bdf8; background: #334155; }
+    .note-card h4 { font-size: 13px; margin-bottom: 4px; color: #f1f5f9; font-weight: 600; }
+    .note-card p { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .editor-pane { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 14px; background: #0b0f17; }
+    #note-title { font-size: 24px; font-weight: 700; color: #ffffff; background: transparent; border: none; outline: none; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { font-size: 11px; background: #0284c7; color: white; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+    #note-body {
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.6;
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+    }
+    .statusbar {
+      height: 30px;
+      background: #090d16;
+      border-top: 1px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 11px;
+      color: #64748b;
+      user-select: none;
+    }
+    .status-badge { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="titlebar">
+    <span>📝 ELIX Notes</span>
+    
+    <!-- Liquid Metal Window Controls Capsule -->
+    <div class="liquid-capsule">
+      <!-- Shared Liquid Metal Chrome Gradient Definition -->
+      <svg width="0" height="0" style="position: absolute;">
+        <defs>
+          <linearGradient id="liquid-chrome-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#e2e8f0" />
+            <stop offset="50%" stop-color="#94a3b8" />
+            <stop offset="75%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Minimize: Thick Liquid Pill -->
+      <button class="liquid-btn" id="btn-minimize" title="Minimize">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M7 16 C7 14.3, 8.3 13, 10 13 L22 13 C23.7 13, 25 14.3, 25 16 C25 17.7, 23.7 19, 22 19 L10 19 C8.3 19, 7 17.7, 7 16 Z" fill="url(#liquid-chrome-grad)" />
+          <!-- Specular Highlight Line -->
+          <path d="M10 14.5 L22 14.5" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.8" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Maximize / Restore: Liquid Stacked Layers -->
+      <button class="liquid-btn" id="btn-maximize" title="Maximize / Restore">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <!-- Top Fluid Blob Layer -->
+          <path d="M16 7 C18 7, 23 9.5, 23 11 C23 12.5, 18 15, 16 15 C14 15, 9 12.5, 9 11 C9 9.5, 14 7, 16 7 Z" fill="url(#liquid-chrome-grad)" />
+          <path d="M14 8.5 C16 8.5, 21 10.2, 21 11" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" fill="none" />
+          <!-- Middle Fluid Tier -->
+          <path d="M9 14.5 C11 16, 14 17.5, 16 17.5 C18 17.5, 21 16, 23 14.5" stroke="url(#liquid-chrome-grad)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          <!-- Bottom Fluid Tier -->
+          <path d="M9 19 C11 20.5, 14 22, 16 22 C18 22, 21 20.5, 23 19" stroke="url(#liquid-chrome-grad)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Close: Organic Bulbous Liquid Cross -->
+      <button class="liquid-btn btn-close" id="btn-close" title="Close">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M11 9 C9.5 9, 8.5 10.5, 9.5 12 C10.8 13.5, 13.5 16, 13.5 16 C13.5 16, 10.8 18.5, 9.5 20 C8.5 21.5, 9.5 23, 11 23 C12.5 23, 14.5 20.8, 16 19 C17.5 20.8, 19.5 23, 21 23 C22.5 23, 23.5 21.5, 22.5 20 C21.2 18.5, 18.5 16, 18.5 16 C18.5 16, 21.2 13.5, 22.5 12 C23.5 10.5, 22.5 9, 21 9 C19.5 9, 17.5 11.2, 16 13 C14.5 11.2, 12.5 9, 11 9 Z" fill="url(#liquid-chrome-grad)" />
+          <!-- Specular Dots on Nodes -->
+          <circle cx="11.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+          <circle cx="20.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="search-row">
+        <input type="text" id="search-box" class="search-input" placeholder="Search notes..." oninput="handleSearch(this.value)" />
+        <button class="btn-add" onclick="createEmptyNote()">+</button>
+      </div>
+      <div class="notes-list" id="notes-list"></div>
+    </div>
+    <div class="editor-pane">
+      <input type="text" id="note-title" placeholder="Note Title" oninput="saveCurrentNote()" />
+      <div class="tags" id="note-tags"></div>
+      <textarea id="note-body" placeholder="Type your note or invoke via AI tool..." oninput="saveCurrentNote()"></textarea>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="status-badge">
+      <div class="status-dot" id="ws-dot"></div>
+      <span id="ws-text">Connecting to ws://127.0.0.1:7391...</span>
+    </div>
+    <span id="note-count">0 Notes</span>
+  </div>
+
+  <script>
+    const { ipcRenderer } = window.require ? window.require('electron') : (typeof require !== 'undefined' ? require('electron') : { ipcRenderer: { send: () => {} } });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer && ipcRenderer.send) {
+        ipcRenderer.send('app-window-minimize');
+      }
+    });
+    document.getElementById('btn-maximize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer && ipcRenderer.send) {
+        ipcRenderer.send('app-window-maximize');
+      }
+    });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer && ipcRenderer.send) {
+        ipcRenderer.send('app-window-close');
+      } else {
+        window.close();
+      }
+    });
+
+    let activeId = "note_1";
+    let notes = [
+      {
+        id: "note_1",
+        title: "Welcome to ELIX OS",
+        body: "ELIX OS is an agentic operating system powered by the Cordis Microkernel architecture.\n\nThis app can be manipulated directly by AI Agents via dynamic tool calling!",
+        tags: ["welcome", "guide"],
+        updatedAt: new Date().toISOString()
+      }
+    ];
+
+    function renderList(listToRender = notes) {
+      const container = document.getElementById('notes-list');
+      container.innerHTML = '';
+      listToRender.forEach((n) => {
+        const el = document.createElement('div');
+        el.className = 'note-card' + (n.id === activeId ? ' active' : '');
+        el.innerHTML = `<h4>${n.title || 'Untitled'}</h4><p>${n.body || 'Empty note...'}</p>`;
+        el.onclick = () => {
+          activeId = n.id;
+          renderList(listToRender);
+          loadActiveNote();
+        };
+        container.appendChild(el);
+      });
+      document.getElementById('note-count').innerText = `${listToRender.length} Notes`;
+      loadActiveNote();
+    }
+
+    function loadActiveNote() {
+      const activeNote = notes.find(n => n.id === activeId) || notes[0];
+      if (!activeNote) return;
+      activeId = activeNote.id;
+      document.getElementById('note-title').value = activeNote.title || '';
+      document.getElementById('note-body').value = activeNote.body || '';
+      const tagsContainer = document.getElementById('note-tags');
+      tagsContainer.innerHTML = '';
+      (activeNote.tags || []).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.innerText = '#' + t;
+        tagsContainer.appendChild(span);
+      });
+    }
+
+    function saveCurrentNote() {
+      const note = notes.find(n => n.id === activeId);
+      if (note) {
+        note.title = document.getElementById('note-title').value;
+        note.body = document.getElementById('note-body').value;
+        renderList();
+      }
+    }
+
+    function createEmptyNote() {
+      const newNote = {
+        id: 'note_' + Date.now(),
+        title: 'New Note',
+        body: '',
+        tags: ['draft'],
+        updatedAt: new Date().toISOString()
+      };
+      notes.unshift(newNote);
+      activeId = newNote.id;
+      document.getElementById('search-box').value = '';
+      renderList(notes);
+    }
+
+    function handleSearch(query) {
+      if (!query || !query.trim()) {
+        renderList(notes);
+        return;
+      }
+      const q = query.toLowerCase();
+      const filtered = notes.filter(n => 
+        (n.title && n.title.toLowerCase().includes(q)) || 
+        (n.body && n.body.toLowerCase().includes(q)) ||
+        (n.tags && n.tags.some(t => t.toLowerCase().includes(q)))
+      );
+
+      if (filtered.length > 0) {
+        activeId = filtered[0].id;
+      }
+      renderList(filtered);
+    }
+
+    function connectBridge() {
+      const APP_ID = 'com.elix.notes';
+      const dot = document.getElementById('ws-dot');
+      const text = document.getElementById('ws-text');
+
+      function dispatchIpcMessage(raw) {
+        try {
+          const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE') {
+            window.close();
+            return;
+          }
+
+          const capability = String(
+            msg.capability ||
+            msg.payload?.capability ||
+            msg.tool ||
+            msg.result?.capability ||
+            ''
+          );
+          const dataObj =
+            msg.args ||
+            msg.payload?.args ||
+            (msg.payload && !msg.payload.capability ? msg.payload : null) ||
+            msg.result?.data ||
+            msg.result?.receivedParams ||
+            msg.data ||
+            {};
+
+          if (capability.includes('search_notes')) {
+            const query = dataObj.query || '';
+            document.getElementById('search-box').value = query;
+            document.getElementById('search-box').focus();
+            handleSearch(query);
+            return;
+          }
+
+          if (capability.includes('delete_note')) {
+            const target = dataObj.id || dataObj.noteId || dataObj.title;
+            notes = notes.filter(n => n.id !== target && n.title !== target);
+            if (notes.length > 0) activeId = notes[0].id;
+            renderList(notes);
+            return;
+          }
+
+          if (capability.includes('create_note') || dataObj.title || dataObj.body) {
+            const noteData = (dataObj.title || dataObj.body) ? dataObj : (msg.result || {});
+            if (!noteData.title && !noteData.body) return;
+            const created = {
+              id: noteData.id || noteData.noteId || 'note_' + Date.now(),
+              title: noteData.title || 'Untitled Note',
+              body: noteData.body || '',
+              tags: Array.isArray(noteData.tags) ? noteData.tags : ['ai'],
+              updatedAt: new Date().toISOString()
+            };
+            notes.unshift(created);
+            activeId = created.id;
+            document.getElementById('search-box').value = '';
+            renderList(notes);
+          }
+        } catch (err) {
+          console.error('IPC dispatch error:', err);
+        }
+      }
+
+      if (!window.__elixIpcBound) {
+        window.__elixIpcBound = true;
+        window.addEventListener('elix-ipc', (event) => {
+          dispatchIpcMessage(event.detail);
+        });
+      }
+
+      try {
+        const socket = new WebSocket('ws://127.0.0.1:7391/?appId=' + encodeURIComponent(APP_ID));
+
+        socket.onopen = () => {
+          dot.className = 'status-dot online';
+          text.innerText = 'Connected to ELIX IPC Bridge (127.0.0.1:7391)';
+          socket.send(JSON.stringify({ type: 'REGISTER', appId: APP_ID }));
+        };
+
+        socket.onmessage = (event) => {
+          dispatchIpcMessage(event.data);
+        };
+
+        socket.onerror = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'WebSocket Error (127.0.0.1:7391)';
+        };
+
+        socket.onclose = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'Bridge Disconnected. Reconnecting...';
+          setTimeout(connectBridge, 1500);
+        };
+      } catch (err) {
+        dot.className = 'status-dot';
+        text.innerText = 'Connection blocked: ' + err.message;
+        setTimeout(connectBridge, 1500);
+      }
+    }
+
+    renderList();
+    connectBridge();
+  </script>
+</body>
+</html>

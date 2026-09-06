@@ -1,0 +1,140 @@
+{
+  "id": "com.elix.media",
+  "name": "ELIX Media",
+  "version": "1.0.0",
+  "description": "High-fidelity cinema video, audio waveform visualizer, and pan-and-zoom media inspector for ELIX OS",
+  "author": {
+    "name": "ELIX Core Team",
+    "email": "dev@elix.os",
+    "url": "https://elix.os"
+  },
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "window": {
+    "width": 1040,
+    "height": 680,
+    "minWidth": 720,
+    "minHeight": 480,
+    "resizable": true,
+    "alwaysOnTop": false,
+    "frame": false,
+    "transparent": true,
+    "center": true,
+    "backgroundColor": "#070b14"
+  },
+  "permissions": [
+    "fs:read",
+    "ui:notification",
+    "ui:dialog",
+    "clipboard:read",
+    "clipboard:write"
+  ],
+  "capabilities": {
+    "open_media": {
+      "name": "open_media",
+      "description": "Open and load audio, video, or high-res image files into the active canvas.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mediaPath": {
+            "type": "string",
+            "description": "Path to the target media asset"
+          },
+          "autoPlay": {
+            "type": "boolean",
+            "description": "Whether to begin playback immediately"
+          },
+          "initialTimeSeconds": {
+            "type": "number",
+            "description": "Initial playback timestamp in seconds"
+          }
+        },
+        "required": [
+          "mediaPath"
+        ]
+      },
+      "permissions": []
+    },
+    "control_playback": {
+      "name": "control_playback",
+      "description": "Control playback state (play, pause, toggle, stop, seek, volume, speed).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["play", "pause", "toggle", "stop", "seek", "set_volume", "set_rate"],
+            "description": "Playback action to execute"
+          },
+          "value": {
+            "description": "Parameter value for action (e.g. timestamp for seek, volume 0-1, rate 0.5-2)"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "permissions": []
+    },
+    "inspect_media_info": {
+      "name": "inspect_media_info",
+      "description": "Inspect codec, resolution, bitrate, color space, audio channels, and EXIF metadata.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mediaPath": {
+            "type": "string",
+            "description": "Path to media file"
+          }
+        },
+        "required": [
+          "mediaPath"
+        ]
+      },
+      "permissions": []
+    },
+    "generate_thumbnail_strip": {
+      "name": "generate_thumbnail_strip",
+      "description": "Generate keyframe thumbnail preview strip across video timeline intervals.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "videoPath": {
+            "type": "string",
+            "description": "Video file path"
+          },
+          "frameCount": {
+            "type": "number",
+            "description": "Number of keyframes to extract"
+          }
+        },
+        "required": [
+          "videoPath"
+        ]
+      },
+      "permissions": []
+    },
+    "set_image_transform": {
+      "name": "set_image_transform",
+      "description": "Apply pan-and-zoom transformation matrix, rotation, and mirror flip on image canvas.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "zoomLevel": {
+            "type": "number",
+            "description": "Zoom factor (e.g. 1.0 = 100%, 2.5 = 250%)"
+          },
+          "rotationDegrees": {
+            "type": "number",
+            "description": "Rotation angle in degrees (0, 90, 180, 270)"
+          },
+          "flipHorizontal": {
+            "type": "boolean",
+            "description": "Horizontal mirror flip"
+          }
+        }
+      },
+      "permissions": []
+    }
+  }
+}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="devices-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111a2d" />
+      <stop offset="100%" stop-color="#080c16" />
+    </linearGradient>
+    <linearGradient id="devices-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#00a2ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#devices-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- Devices Icon: Monitor + Bluetooth node -->
+  <rect x="11" y="13" width="26" height="17" rx="2.5" fill="none" stroke="url(#devices-accent-grad)" stroke-width="2.2" />
+  <line x1="20" y1="30" x2="28" y2="30" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+  <line x1="24" y1="30" x2="24" y2="35" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+  <line x1="18" y1="35" x2="30" y2="35" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+  <circle cx="35" cy="14" r="3" fill="#10b981" />
+</svg>

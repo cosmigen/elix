@@ -1,0 +1,218 @@
+{
+  "version": "1.0.0",
+  "updatedAt": 1787748201352,
+  "apps": {
+    "com.elix.notes": {
+      "manifest": {
+        "id": "com.elix.notes",
+        "name": "ELIX Notes",
+        "version": "1.0.0",
+        "description": "Smart frameless note taking app with dynamic AI agent continuity",
+        "author": {
+          "name": "DeepSeek AI / ELIX Core Team",
+          "email": "elix@deepseek.ai",
+          "url": "https://elix.deepseek.ai"
+        },
+        "entry": "index.html",
+        "icon": "assets/icon.svg",
+        "window": {
+          "width": 680,
+          "height": 600,
+          "minWidth": 400,
+          "minHeight": 350,
+          "resizable": true,
+          "alwaysOnTop": false,
+          "frame": false,
+          "transparent": true,
+          "center": true,
+          "fullscreen": false,
+          "backgroundColor": "#1e1e2e"
+        },
+        "permissions": [
+          "fs:read",
+          "fs:write",
+          "agent:memory",
+          "ui:notification"
+        ],
+        "capabilities": {
+          "create_note": {
+            "name": "create_note",
+            "description": "Create and save a new note with a title, body, and optional tags",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Title of the note"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Body content text in markdown or plain text"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Optional categorization tags"
+                }
+              },
+              "required": [
+                "title",
+                "body"
+              ]
+            },
+            "permissions": [
+              "fs:write"
+            ]
+          },
+          "search_notes": {
+            "name": "search_notes",
+            "description": "Search existing notes by keyword in title, body, or tags",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Search query or keyword"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          },
+          "delete_note": {
+            "name": "delete_note",
+            "description": "Delete an existing note by ID or title",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier of the note to delete"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Alternative title matching of the note to delete"
+                }
+              }
+            }
+          },
+          "get_active_note": {
+            "name": "get_active_note",
+            "description": "Get the currently opened and active note in the editor view",
+            "parameters": {
+              "type": "object",
+              "properties": {},
+              "required": []
+            }
+          }
+        },
+        "categories": [
+          "Productivity",
+          "Utilities"
+        ],
+        "keywords": [
+          "notes",
+          "markdown",
+          "ai-agent",
+          "editor"
+        ]
+      },
+      "installPath": "C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\packages\\apps\\app-bridge\\test-sandbox-studio3d-1787748201219\\apps\\com.elix.notes",
+      "installedAt": 1787748201352,
+      "updatedAt": 1787748201352,
+      "state": "idle",
+      "registeredTools": [
+        {
+          "id": "app:com.elix.notes:create_note",
+          "appId": "com.elix.notes",
+          "name": "app_com_elix_notes_create_note",
+          "description": "Create and save a new note with a title, body, and optional tags",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Title of the note"
+              },
+              "body": {
+                "type": "string",
+                "description": "Body content text in markdown or plain text"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Optional categorization tags"
+              }
+            },
+            "required": [
+              "title",
+              "body"
+            ]
+          },
+          "enabled": true
+        },
+        {
+          "id": "app:com.elix.notes:search_notes",
+          "appId": "com.elix.notes",
+          "name": "app_com_elix_notes_search_notes",
+          "description": "Search existing notes by keyword in title, body, or tags",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Search query or keyword"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          },
+          "enabled": true
+        },
+        {
+          "id": "app:com.elix.notes:delete_note",
+          "appId": "com.elix.notes",
+          "name": "app_com_elix_notes_delete_note",
+          "description": "Delete an existing note by ID or title",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier of the note to delete"
+              },
+              "title": {
+                "type": "string",
+                "description": "Alternative title matching of the note to delete"
+              }
+            }
+          },
+          "enabled": true
+        },
+        {
+          "id": "app:com.elix.notes:get_active_note",
+          "appId": "com.elix.notes",
+          "name": "app_com_elix_notes_get_active_note",
+          "description": "Get the currently opened and active note in the editor view",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          },
+          "enabled": true
+        }
+      ],
+      "storage": {
+        "binPath": "C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\packages\\apps\\app-bridge\\test-sandbox-studio3d-1787748201219\\apps\\com.elix.notes",
+        "dataPath": "C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\packages\\apps\\app-bridge\\test-sandbox-studio3d-1787748201219\\app-data\\com.elix.notes",
+        "cachePath": "C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\packages\\apps\\app-bridge\\test-sandbox-studio3d-1787748201219\\app-cache\\com.elix.notes"
+      }
+    }
+  }
+}

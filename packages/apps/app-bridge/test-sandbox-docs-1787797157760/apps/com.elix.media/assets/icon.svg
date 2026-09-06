@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="gradMedia" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradPlay" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00a2ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38bdf8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#gradMedia)" />
+  <rect x="12" y="12" width="40" height="40" rx="8" fill="#070b14" />
+  
+  <!-- Filmstrip holes top and bottom -->
+  <rect x="16" y="16" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="25" y="16" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="34" y="16" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="43" y="16" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+
+  <rect x="16" y="44" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="25" y="44" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="34" y="44" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+  <rect x="43" y="44" width="5" height="4" rx="1" fill="#a855f7" opacity="0.8" />
+
+  <!-- Play button triangle -->
+  <polygon points="27,25 41,32 27,39" fill="url(#gradPlay)" />
+</svg>

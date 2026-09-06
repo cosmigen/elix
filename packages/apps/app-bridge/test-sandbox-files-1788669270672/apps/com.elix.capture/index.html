@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIX Capture</title>
+  <style>
+    :root {
+      --bg: #090d18;
+      --panel: #111a2f;
+      --panel-alt: #17233e;
+      --panel-hover: #1d2c4e;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 162, 255, 0.45);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --muted: #64748b;
+
+      --accent: #00a2ff;
+      --accent-glow: rgba(0, 162, 255, 0.35);
+      --crimson: #ef4444;
+      --amber: #f59e0b;
+      --emerald: #10b981;
+      --violet: #8b5cf6;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-pill: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      user-select: none;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 42px;
+      background: #0a0f1d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .titlebar-brand svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Segmented Liquid Metal Controls Capsule Frame */
+    .liquid-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 4px;
+      background: linear-gradient(180deg, #182844 0%, #101c33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      -webkit-app-region: no-drag;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .liquid-divider {
+      width: 1px;
+      height: 16px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.07) 30%, 
+        rgba(0, 0, 0, 0.4) 70%, 
+        transparent 100%
+      );
+    }
+
+    .liquid-btn {
+      position: relative;
+      width: 32px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .liquid-glyph {
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      transition: filter 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .liquid-btn:hover .liquid-glyph {
+      transform: scale(1.08);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(186, 215, 255, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn.btn-close:hover .liquid-glyph {
+      transform: scale(1.08) rotate(4deg);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 120, 140, 0.75))
+        drop-shadow(0 0 10px rgba(244, 63, 94, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn:active .liquid-glyph {
+      transform: scale(0.92);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Top Quick-Bar Mode Selector */
+    .top-quickbar {
+      height: 48px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 12px;
+    }
+
+    .mode-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-btn {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .mode-btn:hover, .mode-btn.active {
+      background: var(--panel-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }
+
+    .mode-btn.active {
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 162, 255, 0.2);
+    }
+
+    .record-btn-pill {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .record-btn-pill:hover {
+      transform: scale(1.03);
+      opacity: 0.95;
+    }
+
+    .record-btn-pill.recording {
+      animation: pulse-red 1.5s infinite;
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Main Workspace Canvas Container */
+    .workspace-area {
+      flex: 1;
+      position: relative;
+      background: #060911;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #capture-canvas {
+      background: #111a2f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      cursor: crosshair;
+    }
+
+    /* Snip Dimension Overlay */
+    .dimension-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(17, 26, 47, 0.85);
+      border: 1px solid var(--border-focus);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: monospace;
+      color: var(--accent);
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Floating Annotation HUD Toolbar */
+    .floating-hud {
+      position: absolute;
+      top: 20px;
+      background: rgba(17, 26, 47, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .tool-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--subtext);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tool-icon-btn:hover, .tool-icon-btn.active {
+      background: var(--panel-hover);
+      color: var(--accent);
+      border-color: var(--border-focus);
+    }
+
+    .hud-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Color Swatches */
+    .color-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s;
+    }
+
+    .color-swatch:hover { transform: scale(1.15); }
+    .color-swatch.active { border-color: #ffffff; transform: scale(1.15); }
+
+    /* Live Recording Status HUD */
+    .recording-hud {
+      position: absolute;
+      bottom: 90px;
+      background: rgba(17, 26, 47, 0.92);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      z-index: 25;
+    }
+
+    .rec-dot {
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse-red 1s infinite;
+    }
+
+    .rec-timer {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .vu-meter {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+      width: 32px;
+    }
+
+    .vu-bar {
+      flex: 1;
+      background: #22c55e;
+      border-radius: 1px;
+      height: 4px;
+      transition: height 0.1s;
+    }
+
+    /* Bottom Gallery Drawer */
+    .gallery-drawer {
+      height: 74px;
+      background: #0a0f1d;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 12px;
+      overflow-x: auto;
+      z-index: 30;
+    }
+
+    .gallery-thumb-card {
+      height: 52px;
+      width: 80px;
+      background: #17233e;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: border 0.15s;
+    }
+
+    .gallery-thumb-card.active, .gallery-thumb-card:hover {
+      border-color: var(--accent);
+    }
+
+    .gallery-thumb-card span {
+      font-size: 10px;
+      color: var(--subtext);
+    }
+
+    /* Statusbar */
+    .statusbar {
+      height: 24px;
+      background: #060910;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 11px;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    .status-badge { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      <span id="capture-brand-text">ELIX Capture • Studio Viewfinder</span>
+    </div>
+
+    <!-- Segmented Liquid Metal Controls Capsule -->
+    <div class="liquid-capsule">
+      <svg width="0" height="0" style="position: absolute;">
+        <defs>
+          <linearGradient id="liquid-chrome-grad-capture" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#e2e8f0" />
+            <stop offset="50%" stop-color="#94a3b8" />
+            <stop offset="75%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Minimize -->
+      <button class="liquid-btn" id="btn-minimize" title="Minimize">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M7 16 C7 14.3, 8.3 13, 10 13 L22 13 C23.7 13, 25 14.3, 25 16 C25 17.7, 23.7 19, 22 19 L10 19 C8.3 19, 7 17.7, 7 16 Z" fill="url(#liquid-chrome-grad-capture)" />
+          <path d="M10 14.5 L22 14.5" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.8" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Maximize / Restore -->
+      <button class="liquid-btn" id="btn-maximize" title="Maximize / Restore">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M16 7 C18 7, 23 9.5, 23 11 C23 12.5, 18 15, 16 15 C14 15, 9 12.5, 9 11 C9 9.5, 14 7, 16 7 Z" fill="url(#liquid-chrome-grad-capture)" />
+          <path d="M14 8.5 C16 8.5, 21 10.2, 21 11" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" fill="none" />
+          <path d="M9 14.5 C11 16, 14 17.5, 16 17.5 C18 17.5, 21 16, 23 14.5" stroke="url(#liquid-chrome-grad-capture)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          <path d="M9 19 C11 20.5, 14 22, 16 22 C18 22, 21 20.5, 23 19" stroke="url(#liquid-chrome-grad-capture)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Close -->
+      <button class="liquid-btn btn-close" id="btn-close" title="Close">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M11 9 C9.5 9, 8.5 10.5, 9.5 12 C10.8 13.5, 13.5 16, 13.5 16 C13.5 16, 10.8 18.5, 9.5 20 C8.5 21.5, 9.5 23, 11 23 C12.5 23, 14.5 20.8, 16 19 C17.5 20.8, 19.5 23, 21 23 C22.5 23, 23.5 21.5, 22.5 20 C21.2 18.5, 18.5 16, 18.5 16 C18.5 16, 21.2 13.5, 22.5 12 C23.5 10.5, 22.5 9, 21 9 C19.5 9, 17.5 11.2, 16 13 C14.5 11.2, 12.5 9, 11 9 Z" fill="url(#liquid-chrome-grad-capture)" />
+          <circle cx="11.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+          <circle cx="20.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top Quick-Bar Mode Selector -->
+  <div class="top-quickbar">
+    <div class="mode-group">
+      <button class="mode-btn active" id="btn-snip" onclick="selectCaptureMode('custom_region')">✂ Snip Area</button>
+      <button class="mode-btn" id="btn-fullscreen" onclick="selectCaptureMode('fullscreen')">🖥 Full Screen</button>
+      <button class="mode-btn" id="btn-window" onclick="selectCaptureMode('active_window')">🗔 Window Capture</button>
+    </div>
+
+    <div class="mode-group">
+      <button class="record-btn-pill" id="btn-record" onclick="toggleRecording()">
+        <span class="rec-dot" id="rec-status-dot" style="display:none;"></span>
+        <span id="rec-btn-text">⏺ Record Screen</span>
+      </button>
+      <button class="mode-btn" onclick="captureAudioOnly()">🎙 Audio Only</button>
+    </div>
+  </div>
+
+  <!-- Main Workspace Area -->
+  <div class="workspace-area" id="workspace-container">
+    <div class="dimension-badge" id="dim-badge">1024 × 640 px</div>
+
+    <!-- Floating HUD Annotation Toolbar -->
+    <div class="floating-hud">
+      <!-- Arrow -->
+      <button class="tool-icon-btn active" id="tool-arrow" title="Arrow (A)" onclick="setAnnotationTool('arrow')">➜</button>
+      <!-- Text Callout -->
+      <button class="tool-icon-btn" id="tool-text" title="Text Callout (T)" onclick="setAnnotationTool('text')">T</button>
+      <!-- Rectangle -->
+      <button class="tool-icon-btn" id="tool-rect" title="Rectangle (R)" onclick="setAnnotationTool('rect')">□</button>
+      <!-- Redact Blur -->
+      <button class="tool-icon-btn" id="tool-redact_blur" title="Redact / Pixelate (B)" onclick="setAnnotationTool('redact_blur')">▦</button>
+      <!-- Step Pin Counter -->
+      <button class="tool-icon-btn" id="tool-step_pin" title="Numbered Step Pin (S)" onclick="setAnnotationTool('step_pin')">①</button>
+      <!-- Spotlight -->
+      <button class="tool-icon-btn" id="tool-spotlight" title="Spotlight / Magnifier (M)" onclick="setAnnotationTool('spotlight')">◉</button>
+
+      <div class="hud-divider"></div>
+
+      <!-- Color Swatches -->
+      <div class="color-swatch active" style="background:#00a2ff;" onclick="setStrokeColor('#00a2ff')"></div>
+      <div class="color-swatch" style="background:#ef4444;" onclick="setStrokeColor('#ef4444')"></div>
+      <div class="color-swatch" style="background:#f59e0b;" onclick="setStrokeColor('#f59e0b')"></div>
+      <div class="color-swatch" style="background:#10b981;" onclick="setStrokeColor('#10b981')"></div>
+      <div class="color-swatch" style="background:#8b5cf6;" onclick="setStrokeColor('#8b5cf6')"></div>
+
+      <div class="hud-divider"></div>
+
+      <button class="tool-icon-btn" title="Undo" onclick="undoAnnotation()">↶</button>
+      <button class="tool-icon-btn" title="Redo" onclick="redoAnnotation()">↷</button>
+      <button class="tool-icon-btn" title="Clear All" onclick="clearCanvas()">🗑</button>
+    </div>
+
+    <!-- Live Recording HUD -->
+    <div class="recording-hud" id="recording-hud">
+      <div class="rec-dot"></div>
+      <span class="rec-timer" id="rec-timer-text">00:00:14</span>
+      <div class="vu-meter">
+        <div class="vu-bar" style="height: 6px;"></div>
+        <div class="vu-bar" style="height: 12px;"></div>
+        <div class="vu-bar" style="height: 8px;"></div>
+        <div class="vu-bar" style="height: 14px;"></div>
+      </div>
+      <button class="mode-btn" style="padding:4px 8px;" onclick="stopRecording()">⏹ Stop</button>
+    </div>
+
+    <canvas id="capture-canvas" width="1024" height="580"></canvas>
+  </div>
+
+  <!-- Bottom Gallery Drawer -->
+  <div class="gallery-drawer">
+    <div class="gallery-thumb-card active">
+      <span>Cap_01.png</span>
+    </div>
+    <div class="gallery-thumb-card">
+      <span>Rec_02.webm</span>
+    </div>
+    <div class="gallery-thumb-card">
+      <span>Snip_03.png</span>
+    </div>
+    <button class="mode-btn" style="margin-left:auto;" onclick="quickCopy()">📋 Quick Copy</button>
+    <button class="mode-btn" onclick="saveAsFile()">💾 Save As...</button>
+  </div>
+
+  <!-- Statusbar -->
+  <div class="statusbar">
+    <div class="status-badge">
+      <div class="status-dot" id="ws-dot"></div>
+      <span id="ws-text">Connecting to ELIX IPC Bridge (127.0.0.1:7391)...</span>
+    </div>
+    <span id="capture-metrics">Ready • 1024 × 580 px • 60 FPS • PNG 24-bit</span>
+  </div>
+
+  <script>
+    // Electron Window Management
+    const { ipcRenderer } = window.require ? window.require('electron') : (typeof require !== 'undefined' ? require('electron') : { ipcRenderer: { send: () => {} } });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-minimize');
+    });
+    document.getElementById('btn-maximize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-maximize');
+    });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-close');
+      else window.close();
+    });
+
+    // Canvas & State Management
+    const canvas = document.getElementById('capture-canvas');
+    const ctx = canvas.getContext('2d');
+    let currentTool = 'arrow';
+    let currentColor = '#00a2ff';
+    let currentStrokeWidth = 3;
+    let stepCounter = 1;
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let undoStack = [];
+    let redoStack = [];
+
+    function saveState() {
+      if (undoStack.length >= 50) undoStack.shift();
+      undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+      redoStack = [];
+    }
+
+    function initBackground() {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Grid guides
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+      // Demo capture sample mockup
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(120, 80, 780, 420);
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.strokeRect(120, 80, 780, 420);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('ELIX OS Core Microkernel Viewfinder', 150, 130);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('• Duplex IPC WebSocket Channel: ws://127.0.0.1:7391', 150, 170);
+      ctx.fillText('• Hardened Capability Registry & Permission Broker Active', 150, 200);
+      saveState();
+    }
+    initBackground();
+
+    function setAnnotationTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-icon-btn').forEach(btn => btn.classList.remove('active'));
+      const el = document.getElementById('tool-' + tool);
+      if (el) el.classList.add('active');
+    }
+
+    function setStrokeColor(color) {
+      currentColor = color;
+      document.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function undoAnnotation() {
+      if (undoStack.length > 1) {
+        redoStack.push(undoStack.pop());
+        const state = undoStack[undoStack.length - 1];
+        ctx.putImageData(state, 0, 0);
+      }
+    }
+
+    function redoAnnotation() {
+      if (redoStack.length > 0) {
+        const state = redoStack.pop();
+        undoStack.push(state);
+        ctx.putImageData(state, 0, 0);
+      }
+    }
+
+    function clearCanvas() {
+      saveState();
+      initBackground();
+    }
+
+    // Canvas Interactions
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+      isDrawing = true;
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      const rect = canvas.getBoundingClientRect();
+      const endX = e.clientX - rect.left;
+      const endY = e.clientY - rect.top;
+      drawAnnotation(startX, startY, endX, endY);
+      saveState();
+    });
+
+    function drawAnnotation(x1, y1, x2, y2) {
+      ctx.strokeStyle = currentColor;
+      ctx.fillStyle = currentColor;
+      ctx.lineWidth = currentStrokeWidth;
+
+      if (currentTool === 'arrow') {
+        const headlen = 12;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      } else if (currentTool === 'rect') {
+        ctx.strokeRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+      } else if (currentTool === 'step_pin') {
+        ctx.beginPath();
+        ctx.arc(x1, y1, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(stepCounter++, x1, y1);
+      } else if (currentTool === 'text') {
+        ctx.fillStyle = currentColor;
+        ctx.font = '14px sans-serif';
+        ctx.fillText('Annotation Text Note', x1, y1);
+      } else if (currentTool === 'redact_blur') {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+      } else if (currentTool === 'spotlight') {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x1, y1, 50, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Capture Mode Selector
+    function selectCaptureMode(mode) {
+      document.querySelectorAll('.mode-group .mode-btn').forEach(b => b.classList.remove('active'));
+      event?.target?.classList?.add('active');
+      document.getElementById('capture-metrics').innerText = `Mode: ${mode.toUpperCase()} • 1024 × 580 px • Ready`;
+    }
+
+    // Recording Controls
+    let isRecording = false;
+    let recTimer = null;
+    let recSeconds = 0;
+
+    function toggleRecording() {
+      if (!isRecording) startRecording();
+      else stopRecording();
+    }
+
+    function startRecording() {
+      if (isRecording) return;
+      isRecording = true;
+      document.getElementById('btn-record').classList.add('recording');
+      document.getElementById('rec-status-dot').style.display = 'inline-block';
+      document.getElementById('rec-btn-text').innerText = 'Recording...';
+      document.getElementById('recording-hud').style.display = 'flex';
+      recSeconds = 0;
+      recTimer = setInterval(() => {
+        recSeconds++;
+        const mins = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+        const secs = String(recSeconds % 60).padStart(2, '0');
+        document.getElementById('rec-timer-text').innerText = `00:${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      isRecording = false;
+      clearInterval(recTimer);
+      document.getElementById('btn-record').classList.remove('recording');
+      document.getElementById('rec-status-dot').style.display = 'none';
+      document.getElementById('rec-btn-text').innerText = '⏺ Record Screen';
+      document.getElementById('recording-hud').style.display = 'none';
+      alert('Screen recording finalized and saved to Gallery.');
+    }
+
+    function captureAudioOnly() {
+      alert('Audio stream capture initiated (48kHz FLAC/WAV).');
+    }
+
+    function quickCopy() {
+      alert('Snapshot copied to clipboard.');
+    }
+
+    function saveAsFile() {
+      alert('Snapshot saved to ~/Pictures/ELIX_Captures/');
+    }
+
+    // ==========================================
+    // WEBSOCKET IPC BUS DISPATCH
+    // ==========================================
+    const APP_ID = 'com.elix.capture';
+
+    function connectBridge() {
+      const dot = document.getElementById('ws-dot');
+      const text = document.getElementById('ws-text');
+
+      function dispatchIpcMessage(raw) {
+        try {
+          const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE') {
+            window.close();
+            return;
+          }
+
+          if (msg.appId && msg.appId !== APP_ID && msg.appId !== 'unknown' && !msg.appId.includes('capture')) {
+            return;
+          }
+
+          const capability = String(msg.capability || msg.payload?.capability || msg.tool || msg.result?.capability || '');
+          const data = msg.args || msg.payload?.args || msg.result?.data || msg.result?.receivedParams || msg.data || {};
+
+          if (capability.includes('capture_screen')) {
+            if (data.mode) selectCaptureMode(data.mode);
+            return;
+          }
+
+          if (capability.includes('start_screen_recording')) {
+            startRecording();
+            return;
+          }
+
+          if (capability.includes('stop_screen_recording')) {
+            stopRecording();
+            return;
+          }
+        } catch (err) {
+          console.error('Capture IPC dispatch error:', err);
+        }
+      }
+
+      try {
+        const socket = new WebSocket('ws://127.0.0.1:7391/?appId=' + encodeURIComponent(APP_ID));
+        socket.onopen = () => {
+          dot.className = 'status-dot online';
+          text.innerText = 'Connected to ELIX IPC Bridge (127.0.0.1:7391)';
+          socket.send(JSON.stringify({ type: 'REGISTER', appId: APP_ID }));
+        };
+        socket.onmessage = (event) => dispatchIpcMessage(event.data);
+        socket.onerror = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'WebSocket Error (127.0.0.1:7391)';
+        };
+        socket.onclose = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'Bridge Disconnected. Reconnecting...';
+          setTimeout(connectBridge, 1500);
+        };
+      } catch (err) {
+        dot.className = 'status-dot';
+        text.innerText = 'Connection blocked: ' + err.message;
+        setTimeout(connectBridge, 1500);
+      }
+    }
+
+    connectBridge();
+  </script>
+</body>
+</html>

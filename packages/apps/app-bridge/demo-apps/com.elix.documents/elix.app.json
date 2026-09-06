@@ -1,0 +1,118 @@
+{
+  "id": "com.elix.documents",
+  "name": "ELIX Documents",
+  "version": "1.0.0",
+  "description": "Universal document viewer and editor supporting PDF, Markdown, DOCX, Spreadsheets, and Slide decks with AI outline and search capabilities",
+  "author": {
+    "name": "ELIX Productivity Labs",
+    "email": "documents@elix.os",
+    "url": "https://elix.os"
+  },
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "window": {
+    "width": 1160,
+    "height": 760,
+    "minWidth": 800,
+    "minHeight": 540,
+    "resizable": true,
+    "alwaysOnTop": false,
+    "frame": false,
+    "transparent": true,
+    "center": true,
+    "backgroundColor": "#090d18"
+  },
+  "permissions": [
+    "fs:read",
+    "fs:write",
+    "ui:notification",
+    "ui:dialog",
+    "clipboard:read",
+    "clipboard:write"
+  ],
+  "capabilities": {
+    "open_document": {
+      "name": "open_document",
+      "description": "Open and render a document in PDF, Markdown, DOCX, CSV spreadsheet, or Presentation mode",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filePath": { "type": "string", "description": "Path to document file" },
+          "format": { "type": "string", "enum": ["pdf", "docx", "md", "txt", "csv", "pptx"], "description": "Document format type" }
+        },
+        "required": ["filePath"]
+      }
+    },
+    "search_document_text": {
+      "name": "search_document_text",
+      "description": "Search text occurrences across the document pages or cells with regex and case-matching",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Text query or regex pattern" },
+          "matchCase": { "type": "boolean", "description": "Case-sensitive search flag" },
+          "regex": { "type": "boolean", "description": "Evaluate query as regular expression" }
+        },
+        "required": ["query"]
+      }
+    },
+    "get_document_outline": {
+      "name": "get_document_outline",
+      "description": "Retrieve hierarchical table of contents, heading outline, and structural bookmarks",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "documentId": { "type": "string", "description": "Target document identifier or path" }
+        }
+      }
+    },
+    "annotate_pdf": {
+      "name": "annotate_pdf",
+      "description": "Add a highlight region or sticky note annotation to a PDF page",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pageNumber": { "type": "number", "description": "Page number (1-indexed)" },
+          "highlightRect": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "width": { "type": "number" },
+              "height": { "type": "number" }
+            },
+            "required": ["x", "y", "width", "height"]
+          },
+          "noteText": { "type": "string", "description": "Annotation note text" },
+          "color": { "type": "string", "description": "Highlight color (hex or rgba)" }
+        },
+        "required": ["pageNumber", "highlightRect"]
+      }
+    },
+    "edit_spreadsheet_cell": {
+      "name": "edit_spreadsheet_cell",
+      "description": "Edit cell value or formula in active spreadsheet mode",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cellCoordinate": { "type": "string", "description": "Cell coordinate (e.g., A1, B12, D4)" },
+          "value": { "type": "string", "description": "Raw string or numeric cell value" },
+          "formula": { "type": "string", "description": "Formula expression (e.g. =SUM(A1:A10))" }
+        },
+        "required": ["cellCoordinate"]
+      }
+    },
+    "export_document": {
+      "name": "export_document",
+      "description": "Export or compile current document to target output format",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "targetFormat": { "type": "string", "enum": ["pdf", "html", "md", "csv"], "description": "Target export format" },
+          "destinationPath": { "type": "string", "description": "Output file path" }
+        },
+        "required": ["targetFormat"]
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="doc-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="doc-page-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#doc-bg-grad)" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
+  <!-- Document Sheet -->
+  <path d="M14 10 H28 L36 18 V38 H14 Z" fill="url(#doc-page-grad)" />
+  <!-- Folded Corner -->
+  <path d="M28 10 V18 H36 Z" fill="#cbd5e1" />
+  <!-- Text lines -->
+  <line x1="18" y1="23" x2="32" y2="23" stroke="#0284c7" stroke-width="2" stroke-linecap="round" />
+  <line x1="18" y1="28" x2="30" y2="28" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+  <line x1="18" y1="33" x2="26" y2="33" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+</svg>

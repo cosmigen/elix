@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="appcenter-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111a2d" />
+      <stop offset="100%" stop-color="#080c16" />
+    </linearGradient>
+    <linearGradient id="appcenter-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#00a2ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#appcenter-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- App Center Shopping / Package Icon -->
+  <rect x="13" y="16" width="22" height="20" rx="3" fill="none" stroke="url(#appcenter-accent-grad)" stroke-width="2.2" />
+  <path d="M19 16 V12 C19 9.5 21 8 24 8 C27 8 29 9.5 29 12 V16" fill="none" stroke="url(#appcenter-accent-grad)" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M24 21 V29 M20 25 L24 29 L28 25" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

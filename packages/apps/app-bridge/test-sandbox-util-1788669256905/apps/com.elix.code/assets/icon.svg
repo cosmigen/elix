@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="code-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="code-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#00a2ff" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#code-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- Left Bracket Tag < -->
+  <path d="M19 16 L11 24 L19 32" fill="none" stroke="url(#code-accent-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Right Bracket Tag > -->
+  <path d="M29 16 L37 24 L29 32" fill="none" stroke="url(#code-accent-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Center Slash / -->
+  <path d="M26 14 L22 34" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" />
+</svg>

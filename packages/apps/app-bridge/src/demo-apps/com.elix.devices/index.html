@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <title>ELIX Devices</title>
+  <style>
+    :root {
+      --bg-canvas: #080c16;
+      --bg-titlebar: #0d1424;
+      --bg-sidebar: #0a0f1d;
+      --bg-card: #111a2d;
+      --bg-card-hover: #17243e;
+      --border-main: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(56, 189, 248, 0.4);
+      --primary-cyan: #38bdf8;
+      --primary-blue: #00a2ff;
+      --accent-emerald: #10b981;
+      --accent-amber: #fbbf24;
+      --accent-crimson: #ef4444;
+      --accent-purple: #c084fc;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* SVG Gradient Definitions */
+    .svg-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    /* Top Draggable Title Bar */
+    .titlebar {
+      height: 38px;
+      background: var(--bg-titlebar);
+      border-bottom: 1px solid var(--border-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      -webkit-app-region: drag;
+      z-index: 100;
+    }
+
+    .titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .titlebar-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.3px;
+    }
+
+    .titlebar-pill {
+      font-size: 11px;
+      color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+    }
+
+    /* Segmented Liquid Metal Window Controls */
+    .window-controls-capsule {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 2px;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 5px rgba(0, 0, 0, 0.4);
+      -webkit-app-region: no-drag;
+    }
+
+    .control-btn {
+      width: 26px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .control-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+
+    .control-btn.btn-close:hover {
+      background: rgba(239, 68, 68, 0.85);
+      color: #ffffff;
+    }
+
+    /* Main Container Layout */
+    .app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar Rail */
+    .sidebar {
+      width: 220px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-main);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 8px;
+      gap: 4px;
+    }
+
+    .nav-item {
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-item.active {
+      color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.12);
+      font-weight: 600;
+      border-left: 3px solid var(--primary-cyan);
+    }
+
+    /* Main Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel-view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-view.active-panel {
+      display: flex;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Cards Grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 14px;
+    }
+
+    .device-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .device-card:hover {
+      border-color: var(--border-active);
+      background: var(--bg-card-hover);
+    }
+
+    .device-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .device-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .device-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .badge-online {
+      color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .badge-rssi {
+      color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    /* Hardware Toggle Switches (iOS Style) */
+    .switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .2s;
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-cyan);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Slider Bar */
+    .volume-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--primary-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+    }
+
+    /* VU Meter */
+    .vu-meter-track {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .vu-meter-fill {
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, #10b981 0%, #38bdf8 60%, #fbbf24 85%, #ef4444 100%);
+      transition: width 0.1s ease;
+    }
+
+    /* Display Arrangement Canvas */
+    .display-canvas {
+      height: 180px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px dashed var(--border-main);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+    }
+
+    .monitor-box {
+      width: 140px;
+      height: 90px;
+      background: var(--bg-card);
+      border: 2px solid var(--primary-cyan);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .monitor-box.secondary {
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+    }
+
+    /* Battery Arc Gauge */
+    .battery-card {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .battery-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 6px solid var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-emerald);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Bottom Status Bar */
+    .statusbar {
+      height: 24px;
+      background: #060911;
+      border-top: 1px solid var(--border-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+  <!-- Liquid Chrome Filter Definitions -->
+  <svg class="svg-defs">
+    <defs>
+      <linearGradient id="liquid-chrome-grad-devices" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="50%" stop-color="#94a3b8" stop-opacity="0.4" />
+        <stop offset="100%" stop-color="#00a2ff" stop-opacity="0.8" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Top Draggable Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <img src="assets/icon.svg" class="app-icon" alt="Devices Icon" />
+      <span class="titlebar-title">ELIX Devices</span>
+      <span class="titlebar-pill" id="statusPill">HARDWARE HUB</span>
+    </div>
+
+    <!-- Segmented Liquid Metal Controls -->
+    <div class="window-controls-capsule">
+      <button class="control-btn" id="btnMin" title="Minimize" onclick="sendNativeWindowCommand('app-window-minimize')">
+        <svg viewBox="0 0 10 10"><path d="M1 5 L9 5" /></svg>
+      </button>
+      <button class="control-btn" id="btnMax" title="Maximize" onclick="sendNativeWindowCommand('app-window-maximize')">
+        <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1" /></svg>
+      </button>
+      <button class="control-btn btn-close" id="btnClose" title="Close" onclick="sendNativeWindowCommand('app-window-close')">
+        <svg viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- App Body Layout -->
+  <div class="app-body">
+    <!-- Left Navigation Rail -->
+    <div class="sidebar">
+      <div class="nav-item active" onclick="switchCategory('overview')">
+        <span>⚡ Overview</span>
+      </div>
+      <div class="nav-item" onclick="switchCategory('bluetooth')">
+        <span>🎧 Bluetooth & BLE</span>
+      </div>
+      <div class="nav-item" onclick="switchCategory('wifi')">
+        <span>📶 Wi-Fi & Network</span>
+      </div>
+      <div class="nav-item" onclick="switchCategory('displays')">
+        <span>🖥️ Displays & Layout</span>
+      </div>
+      <div class="nav-item" onclick="switchCategory('audio')">
+        <span>🔊 Audio Hub</span>
+      </div>
+      <div class="nav-item" onclick="switchCategory('battery')">
+        <span>🔋 Battery & Power</span>
+      </div>
+    </div>
+
+    <!-- Main Workspace Content -->
+    <div class="content-area">
+      <!-- Overview View -->
+      <div id="panelOverview" class="panel-view active-panel">
+        <div class="panel-title">
+          <span>Connected Hardware Summary</span>
+          <span style="font-size: 12px; color: var(--accent-emerald);">All Adapters Nominal</span>
+        </div>
+        <div class="card-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🎧 Sony WH-1000XM5</span>
+              <span class="badge badge-online">Connected</span>
+            </div>
+            <div class="device-sub">Bluetooth 5.3 · Battery: 85% · LDAC Active</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">📶 Quantum-WiFi-6E</span>
+              <span class="badge badge-rssi">-48 dBm</span>
+            </div>
+            <div class="device-sub">6 GHz Band · 1.2 Gbps Link Rate · WPA3-Enterprise</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🖥️ LG UltraFine 4K</span>
+              <span class="badge badge-online">Display 1 (Primary)</span>
+            </div>
+            <div class="device-sub">3840 x 2160 @ 144 Hz · HDR Enabled · 150% Scale</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🔋 System Battery</span>
+              <span class="badge badge-online">92% Charging</span>
+            </div>
+            <div class="device-sub">Health: 98% · 00h 42m until full · Balanced Profile</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bluetooth View -->
+      <div id="panelBluetooth" class="panel-view">
+        <div class="panel-title">
+          <span>Bluetooth & Wireless Peripherals</span>
+          <div class="switch-wrap">
+            <span style="font-size: 12px; color: var(--text-muted);">Bluetooth Radio</span>
+            <label class="switch">
+              <input type="checkbox" checked id="toggleBtRadio" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="card-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🎧 Sony WH-1000XM5</span>
+              <span class="badge badge-online">Paired</span>
+            </div>
+            <div class="device-sub">Audio Headset · RSSI: -54 dBm · Battery: 85%</div>
+            <button style="padding: 6px 12px; border-radius: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; cursor: pointer;">Disconnect</button>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🖱️ Logitech MX Master 3S</span>
+              <span class="badge badge-online">Paired</span>
+            </div>
+            <div class="device-sub">Precision Mouse · RSSI: -42 dBm · Battery: 90%</div>
+            <button style="padding: 6px 12px; border-radius: 6px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; cursor: pointer;">Disconnect</button>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🎮 Xbox Wireless Controller</span>
+              <span class="badge badge-rssi">Nearby</span>
+            </div>
+            <div class="device-sub">Bluetooth BLE · RSSI: -72 dBm</div>
+            <button style="padding: 6px 12px; border-radius: 6px; background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: var(--primary-cyan); cursor: pointer;">Pair & Connect</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wi-Fi View -->
+      <div id="panelWifi" class="panel-view">
+        <div class="panel-title">
+          <span>Wi-Fi & Network Access Points</span>
+          <button style="padding: 5px 12px; font-size: 11px; background: var(--bg-card); border: 1px solid var(--border-main); color: var(--text-main); border-radius: 6px; cursor: pointer;" onclick="refreshWifi()">Scan Nearby</button>
+        </div>
+        <div class="card-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">📶 Quantum-WiFi-6E</span>
+              <span class="badge badge-online">Connected</span>
+            </div>
+            <div class="device-sub">Channel 36 · 6 GHz · Security: WPA3 · Signal: 95%</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">📶 Studio-Guest</span>
+              <span class="badge badge-rssi">Open</span>
+            </div>
+            <div class="device-sub">Channel 6 · 2.4 GHz · Security: None · Signal: 78%</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">📶 ELIX-Core-5G</span>
+              <span class="badge badge-rssi">Encrypted</span>
+            </div>
+            <div class="device-sub">Channel 149 · 5 GHz · Security: WPA2-PSK · Signal: 64%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Displays View -->
+      <div id="panelDisplays" class="panel-view">
+        <div class="panel-title">
+          <span>Displays & Monitor Arrangement</span>
+          <span style="font-size: 12px; color: var(--text-muted);">Drag boxes to arrange desktop space</span>
+        </div>
+        <div class="display-canvas">
+          <div class="monitor-box">
+            <div style="font-size: 18px; font-weight: 700; color: var(--primary-cyan);">1</div>
+            <div style="font-size: 10px; color: var(--text-dim);">3840 x 2160 (Primary)</div>
+          </div>
+          <div class="monitor-box secondary">
+            <div style="font-size: 18px; font-weight: 700; color: var(--text-muted);">2</div>
+            <div style="font-size: 10px; color: var(--text-dim);">2560 x 1440 @ 120Hz</div>
+          </div>
+        </div>
+        <div class="card-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">Resolution & Scaling</span>
+            </div>
+            <div class="device-sub">3840 x 2160 (4K UHD) · 150% Scale · 144 Hz</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">High Dynamic Range (HDR)</span>
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="device-sub">Peak Brightness: 600 nits · Wide Color Gamut</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio View -->
+      <div id="panelAudio" class="panel-view">
+        <div class="panel-title">
+          <span>Audio Endpoints & VU Mixer</span>
+        </div>
+        <div class="card-grid">
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🔊 Output: Sony WH-1000XM5</span>
+              <span class="badge badge-online">Default</span>
+            </div>
+            <input type="range" class="volume-slider" min="0" max="100" value="75" />
+            <div class="device-sub">Master Volume: 75% · Sample Rate: 96kHz / 24-bit</div>
+          </div>
+          <div class="device-card">
+            <div class="device-header">
+              <span class="device-name">🎙️ Input: Elgato Wave:3</span>
+              <span class="badge badge-online">Active</span>
+            </div>
+            <div class="vu-meter-track">
+              <div class="vu-meter-fill" id="vuFill"></div>
+            </div>
+            <div class="device-sub">Gain: 55% · Live Test Meter Active</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Battery View -->
+      <div id="panelBattery" class="panel-view">
+        <div class="panel-title">
+          <span>Battery Health & Power Diagnostics</span>
+        </div>
+        <div class="device-card battery-card">
+          <div class="battery-circle" id="batGauge">92%</div>
+          <div>
+            <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">AC Fast Charging (65W USB-PD)</div>
+            <div class="device-sub" style="margin-top: 4px;">Cycle Count: 142 · Health: 98% · Temp: 28°C</div>
+            <div class="device-sub" style="margin-top: 2px;">Estimated time to full: 42 minutes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Status Bar -->
+  <div class="statusbar">
+    <div>Peripherals: <span id="statPeripherals" style="color: var(--text-main); font-weight: 600;">6 Connected</span></div>
+    <div>Hardware Bus: <span style="color: var(--accent-emerald);">Nominal</span> · WebSocket <span style="color: var(--primary-cyan);">7391 Connected</span></div>
+  </div>
+
+  <script>
+
+    // Live sys_hardware_scan Diagnostics
+    async function refreshHardwareDiagnostics() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'rpc_hw_scan_' + Date.now(),
+          method: 'tools/call',
+          params: {
+            name: 'sys_hardware_scan',
+            arguments: {}
+          }
+        }));
+      }
+    }
+
+    let currentCategory = 'overview';
+    let ws = null;
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.sidebar .nav-item').forEach((el, idx) => {
+        el.classList.remove('active');
+      });
+      document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active-panel'));
+
+      const map = {
+        'overview': 0,
+        'bluetooth': 1,
+        'wifi': 2,
+        'displays': 3,
+        'audio': 4,
+        'battery': 5
+      };
+
+      const navItems = document.querySelectorAll('.sidebar .nav-item');
+      if (navItems[map[cat]]) navItems[map[cat]].classList.add('active');
+
+      const panelId = 'panel' + cat.charAt(0).toUpperCase() + cat.slice(1);
+      const panel = document.getElementById(panelId);
+      if (panel) panel.classList.add('active-panel');
+    }
+
+    function refreshWifi() {
+      const pill = document.getElementById('statusPill');
+      pill.textContent = 'SCANNING...';
+      setTimeout(() => {
+        pill.textContent = 'HARDWARE HUB';
+      }, 1000);
+    }
+
+    // VU Meter animation
+    setInterval(() => {
+      const vu = document.getElementById('vuFill');
+      if (vu) {
+        const val = 40 + Math.random() * 45;
+        vu.style.width = val + '%';
+      }
+    }, 120);
+
+    // WebSocket IPC Bus
+    function initWebSocket() {
+      try {
+        ws = new WebSocket('ws://127.0.0.1:7391');
+        ws.onopen = () => {
+          console.log('[ELIX Devices] Connected to IPC bus at ws://127.0.0.1:7391');
+        };
+        ws.onmessage = (evt) => {
+          try {
+            const data = JSON.parse(evt.data);
+            handleIpcMessage(data);
+          } catch (e) {
+            console.error('[ELIX Devices] Failed to parse IPC message:', e);
+          }
+        };
+      } catch (e) {
+        console.warn('[ELIX Devices] WebSocket connect error:', e);
+      }
+    }
+
+    function handleIpcMessage(msg) {
+      if (!msg) return;
+      if (msg.type === 'tool_invocation' && msg.appId === 'com.elix.devices') {
+        const { capability, params, invocationId } = msg;
+        let result = { status: 'ok', capability, appId: 'com.elix.devices' };
+
+        switch (capability) {
+          case 'scan_bluetooth_devices':
+            result.devices = [
+              { id: 'bt-01', name: 'Sony WH-1000XM5', type: 'audio', rssi: -54, paired: true },
+              { id: 'bt-02', name: 'Logitech MX Master 3S', type: 'mouse', rssi: -42, paired: true },
+              { id: 'bt-03', name: 'Xbox Wireless Controller', type: 'gamepad', rssi: -72, paired: false }
+            ];
+            break;
+
+          case 'toggle_bluetooth_state':
+            result.enabled = params?.enabled ?? true;
+            result.targetDeviceId = params?.targetDeviceId || 'bt-01';
+            result.action = params?.action || 'connect';
+            break;
+
+          case 'scan_wifi_networks':
+            result.networks = [
+              { ssid: 'Quantum-WiFi-6E', band: '6GHz', signal: 95, security: 'WPA3' },
+              { ssid: 'Studio-Guest', band: '2.4GHz', signal: 78, security: 'Open' },
+              { ssid: 'ELIX-Core-5G', band: '5GHz', signal: 64, security: 'WPA2' }
+            ];
+            break;
+
+          case 'configure_display':
+            result.displayId = params?.displayId || 'disp-1';
+            result.resolution = params?.resolution || { width: 3840, height: 2160 };
+            result.refreshRateHz = params?.refreshRateHz || 144;
+            result.scaleFactor = params?.scaleFactor || 1.5;
+            result.orientation = params?.orientation || 'landscape';
+            break;
+
+          case 'set_audio_device':
+            result.deviceType = params?.deviceType || 'output';
+            result.deviceId = params?.deviceId || 'audio-out-01';
+            result.volumeLevel = params?.volumeLevel ?? 75;
+            result.isMuted = params?.isMuted ?? false;
+            break;
+
+          case 'get_battery_diagnostics':
+            result.isAcPowered = true;
+            result.hasBattery = true;
+            result.percent = 92;
+            result.healthPercent = 98;
+            result.cycleCount = 142;
+            result.powerMode = 'Balanced';
+            break;
+
+          case 'list_connected_peripherals':
+            result.count = 6;
+            result.peripherals = [
+              { id: 'p1', name: 'Sony WH-1000XM5', bus: 'Bluetooth' },
+              { id: 'p2', name: 'Logitech MX Master 3S', bus: 'Bluetooth' },
+              { id: 'p3', name: 'LG UltraFine 4K', bus: 'DisplayPort' },
+              { id: 'p4', name: 'Elgato Wave:3', bus: 'USB' },
+              { id: 'p5', name: 'Keychron Q1 Pro', bus: 'USB' },
+              { id: 'p6', name: 'Intel Wi-Fi 6E AX211', bus: 'PCIe' }
+            ];
+            break;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN && invocationId) {
+          ws.send(JSON.stringify({
+            type: 'tool_response',
+            invocationId,
+            success: true,
+            result
+          }));
+        }
+      }
+    }
+
+    function sendNativeWindowCommand(channel) {
+      if (window.electron && window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.send(channel);
+      } else if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'window_action', action: channel }));
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initWebSocket();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <title>ELIX Terminal</title>
+  <style>
+    :root {
+      --bg-canvas: #070b14;
+      --bg-header: #0d1527;
+      --bg-block: #0f172a;
+      --bg-block-hover: #17233d;
+      --border-main: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(56, 189, 248, 0.3);
+      --primary-cyan: #38bdf8;
+      --primary-blue: #00a2ff;
+      --accent-emerald: #10b981;
+      --accent-crimson: #ef4444;
+      --accent-amber: #f59e0b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* SVG Gradient Definitions */
+    .svg-defs {
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    /* Window Header / Draggable Bar */
+    .titlebar {
+      height: 42px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      -webkit-app-region: drag;
+      z-index: 100;
+    }
+
+    .titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .titlebar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 16px;
+      -webkit-app-region: no-drag;
+    }
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-main);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-item.active {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--border-highlight);
+      color: var(--primary-cyan);
+      font-weight: 500;
+    }
+
+    .tab-item:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .tab-close {
+      font-size: 10px;
+      opacity: 0.6;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+
+    .tab-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: var(--accent-crimson);
+      opacity: 1;
+    }
+
+    .btn-new-tab {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-main);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .btn-new-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .tab-dropdown {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      background: #0f172a;
+      border: 1px solid var(--border-highlight);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      min-width: 170px;
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 200;
+    }
+
+    .tab-dropdown.show {
+      display: flex;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary-cyan);
+    }
+
+    /* Segmented Liquid Metal Window Controls */
+    .window-controls-capsule {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 2px;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 5px rgba(0, 0, 0, 0.4);
+      -webkit-app-region: no-drag;
+    }
+
+    .control-btn {
+      width: 26px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .control-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+
+    .control-btn.btn-close:hover {
+      background: rgba(239, 68, 68, 0.85);
+      color: #ffffff;
+    }
+
+    /* Workspace Body */
+    .terminal-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Output Stream Viewport */
+    .output-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      user-select: text;
+    }
+
+    .output-stream::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .output-stream::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .output-stream::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+
+    /* Block Based Command Execution */
+    .command-block {
+      background: var(--bg-block);
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+
+    .command-block:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .block-header {
+      background: rgba(0, 0, 0, 0.25);
+      border-bottom: 1px solid var(--border-main);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+
+    .block-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .badge-status.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-status.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-crimson);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-status.running {
+      background: rgba(0, 162, 255, 0.15);
+      color: var(--primary-cyan);
+      border: 1px solid rgba(0, 162, 255, 0.3);
+      animation: pulse-badge 1.5s infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .cwd-pill {
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .cmd-text {
+      color: var(--primary-cyan);
+      font-weight: 500;
+    }
+
+    .block-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+    }
+
+    .btn-copy-output {
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-main);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy-output:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+
+    .block-body {
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ANSI Colors */
+    .ansi-cyan { color: #38bdf8; }
+    .ansi-green { color: #10b981; }
+    .ansi-red { color: #f87171; }
+    .ansi-yellow { color: #fbbf24; }
+    .ansi-gray { color: #64748b; }
+    .ansi-blue { color: #60a5fa; }
+    .ansi-magenta { color: #c084fc; }
+
+    /* Sticky Prompt Line */
+    .prompt-container {
+      background: #0d1527;
+      border-top: 1px solid var(--border-main);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .prompt-symbol {
+      color: var(--primary-cyan);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .prompt-input-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .prompt-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      caret-color: var(--primary-cyan);
+      user-select: text;
+    }
+
+    .prompt-shortcut-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--primary-cyan);
+      cursor: pointer;
+    }
+
+    .prompt-shortcut-badge:hover {
+      background: rgba(56, 189, 248, 0.2);
+    }
+
+    /* AI Command Assist Modal */
+    .ai-assist-modal {
+      position: absolute;
+      bottom: 56px;
+      left: 16px;
+      right: 16px;
+      background: #0f172a;
+      border: 1px solid var(--border-highlight);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 150;
+    }
+
+    .ai-assist-modal.show {
+      display: flex;
+    }
+
+    .ai-assist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--primary-cyan);
+      font-weight: 600;
+    }
+
+    .ai-assist-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-main);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+    }
+
+    .ai-assist-input:focus {
+      border-color: var(--primary-cyan);
+    }
+
+    .ai-assist-suggestions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .suggestion-item {
+      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary-cyan);
+    }
+  </style>
+</head>
+<body>
+  <!-- Liquid Chrome Filter Definitions -->
+  <svg class="svg-defs">
+    <defs>
+      <linearGradient id="liquid-chrome-grad-terminal" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="50%" stop-color="#94a3b8" stop-opacity="0.4" />
+        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.8" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Titlebar & Tabs -->
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <img src="assets/icon.svg" class="app-icon" alt="Terminal Icon" />
+      <span class="titlebar-title">ELIX Terminal</span>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar" id="tabBar">
+        <div class="tab-item active" data-session-id="sess-1" onclick="switchSession('sess-1')">
+          <span>⚡ PowerShell 7</span>
+          <span class="tab-close" onclick="closeSessionTab(event, 'sess-1')">×</span>
+        </div>
+        <div class="btn-new-tab" id="btnNewTab" onclick="toggleTabDropdown(event)">
+          <span>+</span>
+          <div class="tab-dropdown" id="tabDropdown">
+            <div class="dropdown-item" onclick="createSession('powershell')">⚡ PowerShell 7</div>
+            <div class="dropdown-item" onclick="createSession('cmd')">⬛ Command Prompt</div>
+            <div class="dropdown-item" onclick="createSession('wsl')">🐧 WSL / Ubuntu</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liquid Metal Window Controls -->
+    <div class="window-controls-capsule">
+      <button class="control-btn" id="btnMin" title="Minimize" onclick="sendNativeWindowCommand('app-window-minimize')">
+        <svg viewBox="0 0 10 10"><path d="M1 5 L9 5" /></svg>
+      </button>
+      <button class="control-btn" id="btnMax" title="Maximize" onclick="sendNativeWindowCommand('app-window-maximize')">
+        <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1" /></svg>
+      </button>
+      <button class="control-btn btn-close" id="btnClose" title="Close" onclick="sendNativeWindowCommand('app-window-close')">
+        <svg viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Terminal Body -->
+  <div class="terminal-body">
+    <!-- Output Stream Viewport -->
+    <div class="output-stream" id="outputStream">
+      <!-- Default Banner Block -->
+      <div class="command-block">
+        <div class="block-header">
+          <div class="block-header-left">
+            <span class="badge-status success">SYSTEM READY</span>
+            <span class="cwd-pill">C:\Users\elix</span>
+            <span class="cmd-text">elix-init --interactive</span>
+          </div>
+          <div class="block-header-right">
+            <span>Just now</span>
+            <button class="btn-copy-output" onclick="copyBlockOutput(this)">Copy</button>
+          </div>
+        </div>
+        <div class="block-body"><span class="ansi-cyan">⚡ ELIX OS Modern Multi-Shell Terminal Engine v2.0</span>
+<span class="ansi-green">✔ Ready:</span> Node PTY IPC Process Bridge connected (<span class="ansi-yellow">ws://127.0.0.1:7391</span>)
+<span class="ansi-gray">Press Ctrl+K for AI Command Assist | Up/Down for command history</span></div>
+      </div>
+    </div>
+
+    <!-- AI Command Assist Modal -->
+    <div class="ai-assist-modal" id="aiAssistModal">
+      <div class="ai-assist-header">
+        <span>✨ AI Command Assist (Natural Language to Shell)</span>
+        <span style="cursor: pointer;" onclick="toggleAiAssist(false)">ESC to close</span>
+      </div>
+      <input type="text" class="ai-assist-input" id="aiAssistInput" placeholder="Describe task (e.g. 'find large log files and compress them')..." onkeydown="handleAiInput(event)" />
+      <div class="ai-assist-suggestions" id="aiSuggestions">
+        <div class="suggestion-item" onclick="applyAiSuggestion('Get-ChildItem -Path . -Recurse | Where-Object { $_.Length -gt 100MB }')">
+          <span>Find files &gt; 100MB</span>
+          <span class="ansi-cyan">Get-ChildItem ...</span>
+        </div>
+        <div class="suggestion-item" onclick="applyAiSuggestion('git log --graph --oneline --decorate --all -n 10')">
+          <span>Pretty visual git log</span>
+          <span class="ansi-cyan">git log --graph ...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky Prompt Input Line -->
+    <div class="prompt-container">
+      <div class="prompt-symbol">
+        <span>❯</span>
+      </div>
+      <div class="prompt-input-wrapper">
+        <input type="text" class="prompt-input" id="promptInput" placeholder="Type command..." autocomplete="off" spellcheck="false" onkeydown="handlePromptKeydown(event)" />
+      </div>
+      <div class="prompt-shortcut-badge" onclick="toggleAiAssist(true)">
+        <span>✨ Ctrl+K Assist</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    const sessions = new Map([
+      ['sess-1', {
+        id: 'sess-1',
+        shellType: 'powershell',
+        cwd: 'C:\\Users\\elix',
+        history: [],
+        outputHistory: []
+      }]
+    ]);
+    let activeSessionId = 'sess-1';
+    let commandHistory = [];
+    let historyIndex = -1;
+    let ws = null;
+
+    // WebSocket IPC Bus
+    function initWebSocket() {
+      try {
+        ws = new WebSocket('ws://127.0.0.1:7391');
+        ws.onopen = () => {
+          console.log('[ELIX Terminal] Connected to IPC bus at ws://127.0.0.1:7391');
+        };
+        ws.onmessage = (evt) => {
+          try {
+            const data = JSON.parse(evt.data);
+            handleIpcMessage(data);
+          } catch (e) {
+            console.error('[ELIX Terminal] Failed to parse IPC message:', e);
+          }
+        };
+      } catch (e) {
+        console.warn('[ELIX Terminal] WebSocket connect error:', e);
+      }
+    }
+
+    function handleIpcMessage(msg) {
+      if (!msg) return;
+      if (msg.type === 'tool_invocation' && msg.appId === 'com.elix.terminal') {
+        const { capability, params, invocationId } = msg;
+        let result = { status: 'ok', capability, appId: 'com.elix.terminal' };
+
+        switch (capability) {
+          case 'spawn_shell_session':
+            const newSessId = params?.sessionId || `sess-${Date.now()}`;
+            createSession(params?.shellType || 'powershell', newSessId, params?.workingDirectory);
+            result.sessionId = newSessId;
+            break;
+
+          case 'execute_command':
+            const sess = sessions.get(params?.sessionId || activeSessionId);
+            if (sess && params?.commandString) {
+              executeCommandInSession(sess.id, params.commandString);
+              result.executed = true;
+              result.command = params.commandString;
+            }
+            break;
+
+          case 'send_terminal_input':
+            if (params?.sendInterrupt) {
+              appendInterruptSignal(params?.sessionId || activeSessionId);
+              result.interrupted = true;
+            }
+            break;
+
+          case 'get_session_output':
+            const targetSess = sessions.get(params?.sessionId || activeSessionId);
+            result.lines = targetSess ? targetSess.outputHistory.slice(-(params?.lineLimit || 50)) : [];
+            break;
+
+          case 'kill_session':
+            closeSessionTab(null, params?.sessionId);
+            result.killed = true;
+            break;
+
+          case 'list_active_sessions':
+            result.sessions = Array.from(sessions.values()).map(s => ({
+              id: s.id,
+              shellType: s.shellType,
+              cwd: s.cwd
+            }));
+            break;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN && invocationId) {
+          ws.send(JSON.stringify({
+            type: 'tool_response',
+            invocationId,
+            success: true,
+            result
+          }));
+        }
+      }
+    }
+
+    function sendNativeWindowCommand(channel) {
+      if (window.electron && window.electron.ipcRenderer) {
+        window.electron.ipcRenderer.send(channel);
+      } else if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'window_action', action: channel }));
+      }
+    }
+
+    // Tab Management
+    function toggleTabDropdown(e) {
+      e.stopPropagation();
+      const dd = document.getElementById('tabDropdown');
+      dd.classList.toggle('show');
+    }
+
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('tabDropdown');
+      if (dd) dd.classList.remove('show');
+    });
+
+    function createSession(shellType = 'powershell', customId = null, workingDirectory = 'C:\\Users\\elix') {
+      const id = customId || `sess-${Date.now()}`;
+      const nameMap = { powershell: '⚡ PowerShell', cmd: '⬛ CMD', wsl: '🐧 WSL', bash: '🐚 Bash' };
+      sessions.set(id, {
+        id,
+        shellType,
+        cwd: workingDirectory,
+        history: [],
+        outputHistory: []
+      });
+
+      renderTabs();
+      switchSession(id);
+    }
+
+    function switchSession(id) {
+      if (!sessions.has(id)) return;
+      activeSessionId = id;
+      renderTabs();
+      document.getElementById('promptInput').focus();
+    }
+
+    function closeSessionTab(e, id) {
+      if (e) e.stopPropagation();
+      if (sessions.size <= 1) return; // Keep at least 1
+      sessions.delete(id);
+      if (activeSessionId === id) {
+        activeSessionId = Array.from(sessions.keys())[0];
+      }
+      renderTabs();
+    }
+
+    function renderTabs() {
+      const tabBar = document.getElementById('tabBar');
+      const newTabBtn = document.getElementById('btnNewTab');
+      tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
+
+      const nameMap = { powershell: '⚡ PowerShell', cmd: '⬛ CMD', wsl: '🐧 WSL', bash: '🐚 Bash' };
+
+      sessions.forEach((sess, id) => {
+        const item = document.createElement('div');
+        item.className = `tab-item ${id === activeSessionId ? 'active' : ''}`;
+        item.onclick = () => switchSession(id);
+        item.innerHTML = `
+          <span>${nameMap[sess.shellType] || sess.shellType}</span>
+          <span class="tab-close" onclick="closeSessionTab(event, '${id}')">×</span>
+        `;
+        tabBar.insertBefore(item, newTabBtn);
+      });
+    }
+
+    // Command Execution & Output Virtualization
+    function handlePromptKeydown(e) {
+      if (e.key === 'Enter') {
+        const input = document.getElementById('promptInput');
+        const cmd = input.value.trim();
+        if (cmd) {
+          commandHistory.push(cmd);
+          historyIndex = commandHistory.length;
+          executeCommandInSession(activeSessionId, cmd);
+          input.value = '';
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (historyIndex > 0) {
+          historyIndex--;
+          document.getElementById('promptInput').value = commandHistory[historyIndex] || '';
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (historyIndex < commandHistory.length - 1) {
+          historyIndex++;
+          document.getElementById('promptInput').value = commandHistory[historyIndex] || '';
+        } else {
+          historyIndex = commandHistory.length;
+          document.getElementById('promptInput').value = '';
+        }
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        toggleAiAssist(true);
+      } else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+        appendInterruptSignal(activeSessionId);
+      }
+    }
+
+    function executeCommandInSession(sessId, cmd) {
+      const sess = sessions.get(sessId);
+      if (!sess) return;
+
+      const outputStream = document.getElementById('outputStream');
+      const block = document.createElement('div');
+      block.className = 'command-block';
+
+      // Simulate output response
+      const timestamp = new Date().toLocaleTimeString();
+      let statusClass = 'success';
+      let statusText = '0 OK';
+      let outputContent = '';
+
+      if (cmd.startsWith('error') || cmd === 'false') {
+        statusClass = 'error';
+        statusText = '1 ERR';
+        outputContent = `<span class="ansi-red">Command returned non-zero exit code 1</span>`;
+      } else if (cmd === 'ls' || cmd === 'dir' || cmd === 'Get-ChildItem') {
+        outputContent = `<span class="ansi-cyan">Mode                LastWriteTime         Length Name</span>
+----                -------------         ------ ----
+d-----       26-08-2026     12:00                apps
+d-----       26-08-2026     12:00                bridge
+-a----       26-08-2026     12:00           1024 manifest.json`;
+      } else if (cmd.startsWith('echo ')) {
+        outputContent = cmd.slice(5);
+      } else if (cmd === 'pwd') {
+        outputContent = sess.cwd;
+      } else {
+        outputContent = `<span class="ansi-green">Execution completed:</span> ${escapeHtml(cmd)}`;
+      }
+
+      sess.outputHistory.push(`[${timestamp}] ${cmd} -> ${statusText}`);
+
+      block.innerHTML = `
+        <div class="block-header">
+          <div class="block-header-left">
+            <span class="badge-status ${statusClass}">${statusText}</span>
+            <span class="cwd-pill">${escapeHtml(sess.cwd)}</span>
+            <span class="cmd-text">${escapeHtml(cmd)}</span>
+          </div>
+          <div class="block-header-right">
+            <span>${timestamp}</span>
+            <button class="btn-copy-output" onclick="copyBlockOutput(this)">Copy</button>
+          </div>
+        </div>
+        <div class="block-body">${outputContent}</div>
+      `;
+
+      outputStream.appendChild(block);
+      outputStream.scrollTop = outputStream.scrollHeight;
+    }
+
+    function appendInterruptSignal(sessId) {
+      const outputStream = document.getElementById('outputStream');
+      const block = document.createElement('div');
+      block.className = 'command-block';
+      block.innerHTML = `
+        <div class="block-header">
+          <div class="block-header-left">
+            <span class="badge-status error">SIGINT / 130</span>
+            <span class="cmd-text">^C</span>
+          </div>
+          <div class="block-header-right">
+            <span>Interrupted</span>
+          </div>
+        </div>
+        <div class="block-body"><span class="ansi-red">Process terminated by user signal (SIGINT)</span></div>
+      `;
+      outputStream.appendChild(block);
+      outputStream.scrollTop = outputStream.scrollHeight;
+    }
+
+    function copyBlockOutput(btn) {
+      const body = btn.closest('.command-block').querySelector('.block-body');
+      if (body) {
+        navigator.clipboard.writeText(body.innerText).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy', 1500);
+        });
+      }
+    }
+
+    // AI Command Assist Modal
+    function toggleAiAssist(show) {
+      const modal = document.getElementById('aiAssistModal');
+      if (show) {
+        modal.classList.add('show');
+        document.getElementById('aiAssistInput').focus();
+      } else {
+        modal.classList.remove('show');
+        document.getElementById('promptInput').focus();
+      }
+    }
+
+    function handleAiInput(e) {
+      if (e.key === 'Escape') {
+        toggleAiAssist(false);
+      } else if (e.key === 'Enter') {
+        const val = e.target.value.trim();
+        if (val) {
+          applyAiSuggestion(`Get-Process | Sort-Object CPU -Descending | Select-Object -First 5`);
+        }
+      }
+    }
+
+    function applyAiSuggestion(cmd) {
+      document.getElementById('promptInput').value = cmd;
+      toggleAiAssist(false);
+      document.getElementById('promptInput').focus();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      initWebSocket();
+      document.getElementById('promptInput').focus();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIX Files</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #131d33;
+      --panel-alt: #1a2744;
+      --panel-hover: #223354;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-focus: rgba(0, 162, 255, 0.4);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --muted: #64748b;
+      
+      --accent: #00a2ff;
+      --accent-glow: rgba(0, 162, 255, 0.25);
+      --folder-color: #f59e0b;
+      --file-code: #38bdf8;
+      --file-media: #a855f7;
+      --file-archive: #34d399;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      user-select: none;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 42px;
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .titlebar-brand svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Segmented Liquid Metal Controls Capsule Frame */
+    .liquid-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 4px;
+      background: linear-gradient(180deg, #182844 0%, #101c33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      -webkit-app-region: no-drag;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .liquid-divider {
+      width: 1px;
+      height: 16px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.07) 30%, 
+        rgba(0, 0, 0, 0.4) 70%, 
+        transparent 100%
+      );
+    }
+
+    .liquid-btn {
+      position: relative;
+      width: 32px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .liquid-glyph {
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      transition: filter 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .liquid-btn:hover .liquid-glyph {
+      transform: scale(1.08);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(186, 215, 255, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn.btn-close:hover .liquid-glyph {
+      transform: scale(1.08) rotate(4deg);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 120, 140, 0.75))
+        drop-shadow(0 0 10px rgba(244, 63, 94, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn:active .liquid-glyph {
+      transform: scale(0.92);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+    }
+
+    /* 3-Pane Layout */
+    .files-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #0d1527;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 10px;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      padding: 0 6px;
+      margin-bottom: 6px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      color: var(--subtext);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 162, 255, 0.12);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Storage Indicator */
+    .storage-widget {
+      margin-top: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+    }
+
+    .storage-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--subtext);
+      margin-bottom: 6px;
+    }
+
+    .storage-bar-track {
+      height: 6px;
+      background: var(--panel-alt);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .storage-bar-fill {
+      height: 100%;
+      width: 42%;
+      background: linear-gradient(90deg, #00a2ff 0%, #38bdf8 100%);
+      border-radius: 3px;
+    }
+
+    /* Center Main Workspace */
+    .workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* Path Toolbar */
+    .toolbar {
+      height: 46px;
+      background: #0e172a;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 12px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      overflow-x: auto;
+      font-size: 13px;
+      color: var(--subtext);
+    }
+
+    .crumb-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text);
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+
+    .crumb-pill:hover {
+      background: var(--panel-hover);
+      border-color: var(--accent);
+    }
+
+    .search-box {
+      position: relative;
+      width: 220px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      padding: 6px 10px 6px 28px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* View Switcher */
+    .view-toggles {
+      display: flex;
+      gap: 4px;
+      background: var(--panel-alt);
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--subtext);
+      padding: 4px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .view-btn.active {
+      background: var(--panel-hover);
+      color: var(--accent);
+    }
+
+    /* File List Stage */
+    .file-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 14px;
+    }
+
+    /* List View */
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .file-row:hover {
+      background: var(--panel);
+      border-color: var(--border);
+      transform: translateX(2px);
+    }
+
+    .file-row.selected {
+      background: rgba(0, 162, 255, 0.14);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .file-icon {
+      font-size: 16px;
+      width: 24px;
+      margin-right: 8px;
+    }
+
+    .file-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-meta {
+      font-size: 11.5px;
+      color: var(--muted);
+      width: 100px;
+      text-align: right;
+    }
+
+    /* Grid View */
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .grid-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 14px 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .grid-item:hover {
+      background: var(--panel-hover);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .grid-item.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .grid-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .grid-name {
+      font-size: 12px;
+      color: var(--text);
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    /* Right Preview Inspector Pane */
+    .preview-pane {
+      width: 260px;
+      background: #0d1527;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+      gap: 14px;
+      flex-shrink: 0;
+      transition: width 0.2s ease;
+    }
+
+    .preview-pane.collapsed {
+      width: 0;
+      padding: 0;
+      overflow: hidden;
+      border-left: none;
+    }
+
+    .preview-thumb {
+      height: 140px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: var(--muted);
+      overflow: hidden;
+    }
+
+    .preview-content {
+      font-size: 11.5px;
+      color: var(--subtext);
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .preview-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+
+    .detail-label { color: var(--muted); }
+    .detail-val { color: var(--text); font-weight: 500; }
+
+    /* Custom Dark Glass Context Menu */
+    .context-menu {
+      position: fixed;
+      z-index: 1000;
+      background: rgba(19, 29, 51, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      width: 160px;
+    }
+
+    .context-item {
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.12s;
+    }
+
+    .context-item:hover {
+      background: var(--accent);
+      color: #0b1120;
+      font-weight: 600;
+    }
+
+    .context-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Statusbar */
+    .statusbar {
+      height: 28px;
+      background: #090d16;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .status-badge { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span>ELIX Files Explorer</span>
+    </div>
+
+    <!-- Segmented Liquid Metal Controls Capsule -->
+    <div class="liquid-capsule">
+      <svg width="0" height="0" style="position: absolute;">
+        <defs>
+          <linearGradient id="liquid-chrome-grad-files" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#e2e8f0" />
+            <stop offset="50%" stop-color="#94a3b8" />
+            <stop offset="75%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Minimize -->
+      <button class="liquid-btn" id="btn-minimize" title="Minimize">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M7 16 C7 14.3, 8.3 13, 10 13 L22 13 C23.7 13, 25 14.3, 25 16 C25 17.7, 23.7 19, 22 19 L10 19 C8.3 19, 7 17.7, 7 16 Z" fill="url(#liquid-chrome-grad-files)" />
+          <path d="M10 14.5 L22 14.5" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.8" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Maximize / Restore -->
+      <button class="liquid-btn" id="btn-maximize" title="Maximize / Restore">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M16 7 C18 7, 23 9.5, 23 11 C23 12.5, 18 15, 16 15 C14 15, 9 12.5, 9 11 C9 9.5, 14 7, 16 7 Z" fill="url(#liquid-chrome-grad-files)" />
+          <path d="M14 8.5 C16 8.5, 21 10.2, 21 11" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" fill="none" />
+          <path d="M9 14.5 C11 16, 14 17.5, 16 17.5 C18 17.5, 21 16, 23 14.5" stroke="url(#liquid-chrome-grad-files)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          <path d="M9 19 C11 20.5, 14 22, 16 22 C18 22, 21 20.5, 23 19" stroke="url(#liquid-chrome-grad-files)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Close -->
+      <button class="liquid-btn btn-close" id="btn-close" title="Close">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M11 9 C9.5 9, 8.5 10.5, 9.5 12 C10.8 13.5, 13.5 16, 13.5 16 C13.5 16, 10.8 18.5, 9.5 20 C8.5 21.5, 9.5 23, 11 23 C12.5 23, 14.5 20.8, 16 19 C17.5 20.8, 19.5 23, 21 23 C22.5 23, 23.5 21.5, 22.5 20 C21.2 18.5, 18.5 16, 18.5 16 C18.5 16, 21.2 13.5, 22.5 12 C23.5 10.5, 22.5 9, 21 9 C19.5 9, 17.5 11.2, 16 13 C14.5 11.2, 12.5 9, 11 9 Z" fill="url(#liquid-chrome-grad-files)" />
+          <circle cx="11.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+          <circle cx="20.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3-Pane Explorer Layout -->
+  <div class="files-layout">
+    <!-- 1. Left Sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="sidebar-section-title">Favorites</div>
+        <div class="nav-list">
+          <div class="nav-item active" onclick="navigatePath('Home')">🏠 Home</div>
+          <div class="nav-item" onclick="navigatePath('Documents')">📄 Documents</div>
+          <div class="nav-item" onclick="navigatePath('Downloads')">⬇️ Downloads</div>
+          <div class="nav-item" onclick="navigatePath('Desktop')">🖥️ Desktop</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title">Storage & Drives</div>
+        <div class="nav-list">
+          <div class="nav-item" onclick="navigatePath('Root (C:)')">💾 System (C:)</div>
+          <div class="nav-item" onclick="navigatePath('Data (D:)')">📦 Data (D:)</div>
+        </div>
+      </div>
+
+      <!-- Storage Breakdown Bar -->
+      <div class="storage-widget">
+        <div class="storage-label">
+          <span>Storage Used</span>
+          <span id="storage-percent">42.5 GB / 100 GB</span>
+        </div>
+        <div class="storage-bar-track">
+          <div class="storage-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Main Workspace -->
+    <div class="workspace">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="breadcrumbs" id="breadcrumbs-bar">
+          <span class="crumb-pill" onclick="navigatePath('Root')">ELIX</span>
+          <span>/</span>
+          <span class="crumb-pill" id="current-crumb">Home</span>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" class="search-input" placeholder="Search files... (Ctrl+F)" oninput="onSearchInput(this.value)" />
+        </div>
+
+        <div class="view-toggles">
+          <button class="view-btn active" id="btn-view-list" onclick="setViewMode('list')">☰</button>
+          <button class="view-btn" id="btn-view-grid" onclick="setViewMode('grid')">☷</button>
+          <button class="view-btn" onclick="togglePreviewPane()">👁️</button>
+        </div>
+      </div>
+
+      <!-- File Items Viewport -->
+      <div class="file-viewport" id="file-viewport" oncontextmenu="openContextMenu(event)">
+        <div class="file-list" id="items-container"></div>
+      </div>
+    </div>
+
+    <!-- 3. Right Quick-Preview Pane -->
+    <div class="preview-pane" id="preview-pane">
+      <div class="preview-thumb" id="preview-thumb">📄</div>
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:2px;" id="preview-title">Select an item</div>
+        <div style="font-size:11px;color:var(--muted);" id="preview-type">File metadata</div>
+      </div>
+
+      <div class="preview-content" id="preview-text-box">Select a file to preview its content.</div>
+
+      <div class="preview-details">
+        <div class="detail-row">
+          <span class="detail-label">Size:</span>
+          <span class="detail-val" id="meta-size">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Modified:</span>
+          <span class="detail-val" id="meta-modified">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Permissions:</span>
+          <span class="detail-val" id="meta-perms">rw-r--r--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div class="context-menu" id="context-menu">
+    <div class="context-item" onclick="onContextAction('open')">📂 Open</div>
+    <div class="context-item" onclick="onContextAction('preview')">👁️ Quick Preview</div>
+    <div class="context-item" onclick="onContextAction('copypath')">📋 Copy Path</div>
+    <div class="context-divider"></div>
+    <div class="context-item" onclick="onContextAction('zip')">📦 Compress to ZIP</div>
+    <div class="context-item" style="color:#ef4444;" onclick="onContextAction('delete')">🗑️ Delete</div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="statusbar">
+    <div class="status-badge">
+      <div class="status-dot" id="ws-dot"></div>
+      <span id="ws-text">Connecting to ELIX IPC Bridge (127.0.0.1:7391)...</span>
+    </div>
+    <span id="files-status-info">7 items</span>
+  </div>
+
+  <script>
+    // Electron IPC Window Management
+    const { ipcRenderer } = window.require ? window.require('electron') : (typeof require !== 'undefined' ? require('electron') : { ipcRenderer: { send: () => {} } });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-minimize');
+    });
+    document.getElementById('btn-maximize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-maximize');
+    });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-close');
+      else window.close();
+    });
+
+    // File Browser State
+    let currentPath = '/home/elix';
+    let viewMode = 'list';
+    let selectedFile = null;
+
+    const MOCK_FILES = [
+      { name: 'Projects', isDir: true, size: '--', modified: '2026-08-26 14:10', icon: '📁', type: 'Folder' },
+      { name: 'Documents', isDir: true, size: '--', modified: '2026-08-26 11:24', icon: '📁', type: 'Folder' },
+      { name: 'kernel-daemon.ts', isDir: false, size: '24.5 KB', modified: '2026-08-26 15:42', icon: '📜', type: 'TypeScript', preview: 'import { Microkernel } from "@elix/core";\nexport class KernelDaemon {\n  async init() {}\n}' },
+      { name: 'system_architecture.svg', isDir: false, size: '112.8 KB', modified: '2026-08-26 09:18', icon: '🖼️', type: 'Vector Image', preview: '<svg viewBox="0 0 800 600">...</svg>' },
+      { name: 'firmware-bundle.zip', isDir: false, size: '4.8 MB', modified: '2026-08-25 18:30', icon: '📦', type: 'ZIP Archive', preview: 'Binary Archive Header [PK\\x03\\x04]' },
+      { name: 'audio-chime.wav', isDir: false, size: '340.2 KB', modified: '2026-08-24 20:12', icon: '🎵', type: 'WAV Audio', preview: 'Waveform data [44.1kHz 16-bit PCM]' },
+      { name: 'README.md', isDir: false, size: '3.1 KB', modified: '2026-08-26 16:00', icon: '📝', type: 'Markdown', preview: '# ELIX OS Files Engine\nHigh performance IPC-driven file navigator.' }
+    ];
+
+    function renderFiles(items = MOCK_FILES) {
+      const container = document.getElementById('items-container');
+      container.className = viewMode === 'list' ? 'file-list' : 'file-grid';
+      container.innerHTML = '';
+
+      items.forEach((item) => {
+        const el = document.createElement('div');
+        el.className = viewMode === 'list' ? 'file-row' : 'grid-item';
+        if (selectedFile?.name === item.name) el.classList.add('selected');
+
+        if (viewMode === 'list') {
+          el.innerHTML = `
+            <span class="file-icon">${item.icon}</span>
+            <span class="file-name">${item.name}</span>
+            <span class="file-meta">${item.size}</span>
+            <span class="file-meta" style="width:130px;">${item.modified}</span>
+          `;
+        } else {
+          el.innerHTML = `
+            <span class="grid-icon">${item.icon}</span>
+            <span class="grid-name">${item.name}</span>
+          `;
+        }
+
+        el.onclick = () => selectFile(item, el);
+        el.ondblclick = () => {
+          if (item.isDir) navigatePath(item.name);
+        };
+        container.appendChild(el);
+      });
+
+      document.getElementById('files-status-info').innerText = `${items.length} items`;
+    }
+
+    function selectFile(file, el) {
+      selectedFile = file;
+      document.querySelectorAll('.file-row, .grid-item').forEach(e => e.classList.remove('selected'));
+      if (el) el.classList.add('selected');
+
+      document.getElementById('preview-thumb').innerText = file.icon;
+      document.getElementById('preview-title').innerText = file.name;
+      document.getElementById('preview-type').innerText = file.type;
+      document.getElementById('meta-size').innerText = file.size;
+      document.getElementById('meta-modified').innerText = file.modified;
+      document.getElementById('preview-text-box').innerText = file.preview || (file.isDir ? 'Directory containing child items.' : 'Binary file.');
+    }
+
+    function navigatePath(sub) {
+      currentPath = `/home/elix/${sub}`;
+      document.getElementById('current-crumb').innerText = sub;
+      renderFiles();
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      document.getElementById('btn-view-list').classList.toggle('active', mode === 'list');
+      document.getElementById('btn-view-grid').classList.toggle('active', mode === 'grid');
+      renderFiles();
+    }
+
+    function togglePreviewPane() {
+      document.getElementById('preview-pane').classList.toggle('collapsed');
+    }
+
+    function onSearchInput(query) {
+      if (!query.trim()) {
+        renderFiles(MOCK_FILES);
+        return;
+      }
+      const filtered = MOCK_FILES.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
+      renderFiles(filtered);
+    }
+
+    // Context Menu
+    function openContextMenu(e) {
+      e.preventDefault();
+      const menu = document.getElementById('context-menu');
+      menu.style.display = 'flex';
+      menu.style.left = e.clientX + 'px';
+      menu.style.top = e.clientY + 'px';
+    }
+
+    document.addEventListener('click', () => {
+      document.getElementById('context-menu').style.display = 'none';
+    });
+
+    function onContextAction(action) {
+      if (action === 'copypath' && selectedFile) {
+        if (navigator.clipboard) navigator.clipboard.writeText(`${currentPath}/${selectedFile.name}`);
+      }
+      document.getElementById('context-menu').style.display = 'none';
+    }
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        document.getElementById('search-input').focus();
+      }
+    });
+
+    // ==========================================
+    // WEBSOCKET IPC BUS DISPATCH
+    // ==========================================
+    const APP_ID = 'com.elix.files';
+
+    function connectBridge() {
+      const dot = document.getElementById('ws-dot');
+      const text = document.getElementById('ws-text');
+
+      function dispatchIpcMessage(raw) {
+        try {
+          const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE') {
+            window.close();
+            return;
+          }
+
+          if (msg.appId && msg.appId !== APP_ID && msg.appId !== 'unknown' && !msg.appId.includes('files')) {
+            return;
+          }
+
+          const capability = String(msg.capability || msg.payload?.capability || msg.tool || msg.result?.capability || '');
+          const data = msg.args || msg.payload?.args || msg.result?.data || msg.result?.receivedParams || msg.data || {};
+
+          if (capability.includes('list_directory')) {
+            navigatePath(data.path || 'Home');
+            return;
+          }
+
+          if (capability.includes('search_files')) {
+            onSearchInput(data.query || '');
+            return;
+          }
+
+          if (capability.includes('inspect_file_metadata')) {
+            const found = MOCK_FILES.find(f => f.name.includes(data.targetPath || ''));
+            if (found) selectFile(found, null);
+            return;
+          }
+        } catch (err) {
+          console.error('Files IPC dispatch error:', err);
+        }
+      }
+
+      try {
+        const socket = new WebSocket('ws://127.0.0.1:7391/?appId=' + encodeURIComponent(APP_ID));
+        socket.onopen = () => {
+          dot.className = 'status-dot online';
+          text.innerText = 'Connected to ELIX IPC Bridge (127.0.0.1:7391)';
+          socket.send(JSON.stringify({ type: 'REGISTER', appId: APP_ID }));
+        };
+        socket.onmessage = (event) => dispatchIpcMessage(event.data);
+        socket.onerror = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'WebSocket Error (127.0.0.1:7391)';
+        };
+        socket.onclose = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'Bridge Disconnected. Reconnecting...';
+          setTimeout(connectBridge, 1500);
+        };
+      } catch (err) {
+        dot.className = 'status-dot';
+        text.innerText = 'Connection blocked: ' + err.message;
+        setTimeout(connectBridge, 1500);
+      }
+    }
+
+    renderFiles();
+    if (MOCK_FILES[2]) selectFile(MOCK_FILES[2]);
+    connectBridge();
+  </script>
+</body>
+</html>

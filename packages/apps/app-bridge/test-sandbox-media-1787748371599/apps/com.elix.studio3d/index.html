@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIX 3D Studio</title>
+  <style>
+    :root {
+      --bg: #080c16;
+      --viewport-bg: #05070d;
+      --panel: #111a2e;
+      --panel-alt: #17233d;
+      --panel-hover: #1e2c4d;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 162, 255, 0.4);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --muted: #64748b;
+
+      --accent: #00a2ff;
+      --accent-glow: rgba(0, 162, 255, 0.35);
+      --red: #ef4444;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      user-select: none;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 42px;
+      background: #090e1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .titlebar-brand svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Segmented Liquid Metal Controls Capsule Frame */
+    .liquid-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 4px;
+      background: linear-gradient(180deg, #182844 0%, #101c33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      -webkit-app-region: no-drag;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .liquid-divider {
+      width: 1px;
+      height: 16px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.07) 30%, 
+        rgba(0, 0, 0, 0.4) 70%, 
+        transparent 100%
+      );
+    }
+
+    .liquid-btn {
+      position: relative;
+      width: 32px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .liquid-glyph {
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      transition: filter 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .liquid-btn:hover .liquid-glyph {
+      transform: scale(1.08);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(186, 215, 255, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn.btn-close:hover .liquid-glyph {
+      transform: scale(1.08) rotate(4deg);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 120, 140, 0.75))
+        drop-shadow(0 0 10px rgba(244, 63, 94, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn:active .liquid-glyph {
+      transform: scale(0.92);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Workspace Body */
+    .studio-workspace {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Viewport Area */
+    .viewport-container {
+      flex: 1;
+      position: relative;
+      background: var(--viewport-bg);
+      overflow: hidden;
+    }
+
+    #webgl-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Floating Mini-Axes Orientation Gizmo */
+    .orientation-gizmo {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 80px;
+      height: 80px;
+      background: rgba(17, 26, 46, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .gizmo-axis-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Floating Tool Ribbon */
+    .floating-tool-ribbon {
+      position: absolute;
+      top: 14px;
+      left: 104px;
+      right: 14px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .ribbon-group {
+      display: flex;
+      gap: 6px;
+      background: rgba(17, 26, 46, 0.82);
+      backdrop-filter: blur(12px);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      pointer-events: auto;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .ribbon-btn {
+      background: transparent;
+      border: none;
+      color: var(--subtext);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .ribbon-btn.active, .ribbon-btn:hover {
+      background: var(--panel-hover);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .ribbon-btn.active {
+      color: var(--accent);
+      font-weight: 600;
+      border: 1px solid var(--border-focus);
+    }
+
+    /* Right Inspector Drawer */
+    .inspector-drawer {
+      width: 310px;
+      background: #0b111e;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 16px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      z-index: 30;
+    }
+
+    .drawer-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .stat-val {
+      font-family: monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Transform Controls (XYZ inputs) */
+    .transform-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .axis-input-group {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+    }
+
+    .axis-label {
+      font-weight: 700;
+      margin-right: 4px;
+      font-size: 10.5px;
+    }
+
+    .axis-label.x { color: var(--red); }
+    .axis-label.y { color: var(--green); }
+    .axis-label.z { color: var(--blue); }
+
+    .axis-val-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: monospace;
+      outline: none;
+      font-size: 11px;
+    }
+
+    /* Material controls */
+    .slider-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--subtext);
+    }
+
+    .studio-range {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .color-swatch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .color-picker-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      background: #00a2ff;
+    }
+
+    /* Status Bar */
+    .statusbar {
+      height: 26px;
+      background: #060910;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 11px;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    .status-badge { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
+      <span>ELIX 3D Studio & WebGL Viewport</span>
+    </div>
+
+    <!-- Segmented Liquid Metal Controls Capsule -->
+    <div class="liquid-capsule">
+      <svg width="0" height="0" style="position: absolute;">
+        <defs>
+          <linearGradient id="liquid-chrome-grad-studio3d" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#e2e8f0" />
+            <stop offset="50%" stop-color="#94a3b8" />
+            <stop offset="75%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Minimize -->
+      <button class="liquid-btn" id="btn-minimize" title="Minimize">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M7 16 C7 14.3, 8.3 13, 10 13 L22 13 C23.7 13, 25 14.3, 25 16 C25 17.7, 23.7 19, 22 19 L10 19 C8.3 19, 7 17.7, 7 16 Z" fill="url(#liquid-chrome-grad-studio3d)" />
+          <path d="M10 14.5 L22 14.5" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.8" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Maximize / Restore -->
+      <button class="liquid-btn" id="btn-maximize" title="Maximize / Restore">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M16 7 C18 7, 23 9.5, 23 11 C23 12.5, 18 15, 16 15 C14 15, 9 12.5, 9 11 C9 9.5, 14 7, 16 7 Z" fill="url(#liquid-chrome-grad-studio3d)" />
+          <path d="M14 8.5 C16 8.5, 21 10.2, 21 11" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" fill="none" />
+          <path d="M9 14.5 C11 16, 14 17.5, 16 17.5 C18 17.5, 21 16, 23 14.5" stroke="url(#liquid-chrome-grad-studio3d)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          <path d="M9 19 C11 20.5, 14 22, 16 22 C18 22, 21 20.5, 23 19" stroke="url(#liquid-chrome-grad-studio3d)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Close -->
+      <button class="liquid-btn btn-close" id="btn-close" title="Close">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M11 9 C9.5 9, 8.5 10.5, 9.5 12 C10.8 13.5, 13.5 16, 13.5 16 C13.5 16, 10.8 18.5, 9.5 20 C8.5 21.5, 9.5 23, 11 23 C12.5 23, 14.5 20.8, 16 19 C17.5 20.8, 19.5 23, 21 23 C22.5 23, 23.5 21.5, 22.5 20 C21.2 18.5, 18.5 16, 18.5 16 C18.5 16, 21.2 13.5, 22.5 12 C23.5 10.5, 22.5 9, 21 9 C19.5 9, 17.5 11.2, 16 13 C14.5 11.2, 12.5 9, 11 9 Z" fill="url(#liquid-chrome-grad-studio3d)" />
+          <circle cx="11.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+          <circle cx="20.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Workspace Body -->
+  <div class="studio-workspace">
+    <!-- Viewport Container -->
+    <div class="viewport-container" id="viewport-container">
+      <canvas id="webgl-canvas"></canvas>
+
+      <!-- Floating Mini-Axes Orientation Gizmo -->
+      <div class="orientation-gizmo">
+        <canvas class="gizmo-axis-canvas" id="gizmo-canvas" width="80" height="80"></canvas>
+      </div>
+
+      <!-- Top Floating Tool Ribbon -->
+      <div class="floating-tool-ribbon">
+        <!-- Shading Modes -->
+        <div class="ribbon-group">
+          <button class="ribbon-btn active" id="shading-rendered" onclick="setShading('rendered')">✨ Rendered</button>
+          <button class="ribbon-btn" id="shading-wireframe" onclick="setShading('wireframe')">📐 Wireframe</button>
+          <button class="ribbon-btn" id="shading-normals" onclick="setShading('normals')">🌈 Normals</button>
+          <button class="ribbon-btn" id="shading-xray" onclick="setShading('xray')">👁 X-Ray</button>
+          <button class="ribbon-btn" id="shading-flat" onclick="setShading('flat')">⬛ Flat</button>
+        </div>
+
+        <!-- Lighting Presets -->
+        <div class="ribbon-group">
+          <button class="ribbon-btn active" onclick="setLighting('studio_clean')">💡 Studio</button>
+          <button class="ribbon-btn" onclick="setLighting('neon_cyber')">🟣 Cyber</button>
+          <button class="ribbon-btn" onclick="setLighting('warm_sunset')">🌅 Sunset</button>
+        </div>
+
+        <!-- Camera Angles -->
+        <div class="ribbon-group">
+          <button class="ribbon-btn" onclick="snapCamera('top')">Top</button>
+          <button class="ribbon-btn" onclick="snapCamera('front')">Front</button>
+          <button class="ribbon-btn" onclick="snapCamera('side')">Side</button>
+          <button class="ribbon-btn" onclick="toggleGrid()">Grid</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Collapsible Inspector Drawer -->
+    <div class="inspector-drawer">
+      <!-- Mesh Geometry Stats -->
+      <div class="drawer-section">
+        <div class="section-title">
+          <span>Mesh Geometry Stats</span>
+          <span style="color:var(--accent);">Active</span>
+        </div>
+        <div class="stat-row"><span>Polygons / Faces:</span><span class="stat-val" id="stat-polys">4,896</span></div>
+        <div class="stat-row"><span>Vertices:</span><span class="stat-val" id="stat-verts">2,450</span></div>
+        <div class="stat-row"><span>Bounding Box (X×Y×Z):</span><span class="stat-val" id="stat-bounds">2.40 × 1.80 × 2.10 m</span></div>
+        <div class="stat-row"><span>Memory Footprint:</span><span class="stat-val" id="stat-memory">384 KB</span></div>
+      </div>
+
+      <!-- Object Transform Controls -->
+      <div class="drawer-section">
+        <div class="section-title">Transform Controls</div>
+        
+        <span style="font-size:11px;color:var(--muted);">Position (m)</span>
+        <div class="transform-row">
+          <div class="axis-input-group"><span class="axis-label x">X</span><input type="text" class="axis-val-input" value="0.00" id="pos-x" /></div>
+          <div class="axis-input-group"><span class="axis-label y">Y</span><input type="text" class="axis-val-input" value="0.00" id="pos-y" /></div>
+          <div class="axis-input-group"><span class="axis-label z">Z</span><input type="text" class="axis-val-input" value="0.00" id="pos-z" /></div>
+        </div>
+
+        <span style="font-size:11px;color:var(--muted);margin-top:4px;">Rotation (deg)</span>
+        <div class="transform-row">
+          <div class="axis-input-group"><span class="axis-label x">X</span><input type="text" class="axis-val-input" value="15.0" id="rot-x" /></div>
+          <div class="axis-input-group"><span class="axis-label y">Y</span><input type="text" class="axis-val-input" value="45.0" id="rot-y" /></div>
+          <div class="axis-input-group"><span class="axis-label z">Z</span><input type="text" class="axis-val-input" value="0.00" id="rot-z" /></div>
+        </div>
+
+        <span style="font-size:11px;color:var(--muted);margin-top:4px;">Scale</span>
+        <div class="transform-row">
+          <div class="axis-input-group"><span class="axis-label x">X</span><input type="text" class="axis-val-input" value="1.00" id="scale-x" /></div>
+          <div class="axis-input-group"><span class="axis-label y">Y</span><input type="text" class="axis-val-input" value="1.00" id="scale-y" /></div>
+          <div class="axis-input-group"><span class="axis-label z">Z</span><input type="text" class="axis-val-input" value="1.00" id="scale-z" /></div>
+        </div>
+      </div>
+
+      <!-- Material / Shader Inspector -->
+      <div class="drawer-section">
+        <div class="section-title">PBR Material & Shader</div>
+        
+        <div class="color-swatch-row">
+          <span style="font-size:11.5px;color:var(--subtext);">Base Color:</span>
+          <div class="color-picker-btn" id="mat-color-btn" style="background:#00a2ff;"></div>
+        </div>
+
+        <div class="slider-item">
+          <div class="slider-label"><span>Roughness</span><span id="val-roughness">0.25</span></div>
+          <input type="range" class="studio-range" min="0" max="1" step="0.01" value="0.25" id="slider-roughness" />
+        </div>
+
+        <div class="slider-item">
+          <div class="slider-label"><span>Metalness</span><span id="val-metalness">0.85</span></div>
+          <input type="range" class="studio-range" min="0" max="1" step="0.01" value="0.85" id="slider-metalness" />
+        </div>
+
+        <div class="slider-item">
+          <div class="slider-label"><span>Wireframe Opacity</span><span id="val-wire-op">0.40</span></div>
+          <input type="range" class="studio-range" min="0" max="1" step="0.01" value="0.40" id="slider-wire-op" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="statusbar">
+    <div class="status-badge">
+      <div class="status-dot" id="ws-dot"></div>
+      <span id="ws-text">Connecting to ELIX IPC Bridge (127.0.0.1:7391)...</span>
+    </div>
+    <span id="studio-status-info">WebGL 2.0 Active • 60.0 FPS • Shading: Rendered</span>
+  </div>
+
+  <script>
+    // Electron IPC Window Management
+    const { ipcRenderer } = window.require ? window.require('electron') : (typeof require !== 'undefined' ? require('electron') : { ipcRenderer: { send: () => {} } });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-minimize');
+    });
+    document.getElementById('btn-maximize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-maximize');
+    });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-close');
+      else window.close();
+    });
+
+    // 3D Scene State
+    let currentShading = 'rendered';
+    let currentLighting = 'studio_clean';
+    let gridVisible = true;
+    let rotX = 0.3;
+    let rotY = 0.6;
+    let zoom = 1.0;
+
+    const canvas = document.getElementById('webgl-canvas');
+    const ctx = canvas.getContext('2d');
+    const gizmoCanvas = document.getElementById('gizmo-canvas');
+    const gizmoCtx = gizmoCanvas.getContext('2d');
+
+    function resizeCanvas() {
+      const container = document.getElementById('viewport-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      draw3DScene();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Orbit Drag Controls
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      rotY += dx * 0.01;
+      rotX += dy * 0.01;
+      document.getElementById('rot-x').value = (rotX * (180 / Math.PI)).toFixed(1);
+      document.getElementById('rot-y').value = (rotY * (180 / Math.PI)).toFixed(1);
+      draw3DScene();
+    });
+
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    canvas.addEventListener('wheel', (e) => {
+      zoom += e.deltaY * -0.001;
+      zoom = Math.max(0.2, Math.min(5.0, zoom));
+      draw3DScene();
+    });
+
+    function setShading(mode) {
+      currentShading = mode;
+      document.querySelectorAll('.ribbon-group button[id^="shading-"]').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('shading-' + mode);
+      if (activeBtn) activeBtn.classList.add('active');
+      document.getElementById('studio-status-info').innerText = `WebGL 2.0 Active • 60.0 FPS • Shading: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+      draw3DScene();
+    }
+
+    function setLighting(preset) {
+      currentLighting = preset;
+      draw3DScene();
+    }
+
+    function snapCamera(axis) {
+      if (axis === 'top') { rotX = Math.PI / 2; rotY = 0; }
+      else if (axis === 'front') { rotX = 0; rotY = 0; }
+      else if (axis === 'side') { rotX = 0; rotY = Math.PI / 2; }
+      draw3DScene();
+    }
+
+    function toggleGrid() {
+      gridVisible = !gridVisible;
+      draw3DScene();
+    }
+
+    // 3D Rendering Pipeline (Isometric Projection & Mesh Rasterizer)
+    function draw3DScene() {
+      if (!ctx) return;
+      ctx.fillStyle = '#05070d';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const scale = 140 * zoom;
+
+      // Draw Floor Grid
+      if (gridVisible) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.lineWidth = 1;
+        const gridSize = 10;
+        const step = 30 * zoom;
+        for (let i = -gridSize; i <= gridSize; i++) {
+          const x1 = cx + i * step * Math.cos(rotY) - gridSize * step * Math.sin(rotY);
+          const y1 = cy + 120 + i * step * Math.sin(rotX) * Math.sin(rotY) + gridSize * step * Math.sin(rotX) * Math.cos(rotY);
+          const x2 = cx + i * step * Math.cos(rotY) + gridSize * step * Math.sin(rotY);
+          const y2 = cy + 120 + i * step * Math.sin(rotX) * Math.sin(rotY) - gridSize * step * Math.sin(rotX) * Math.cos(rotY);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+      }
+
+      // Draw 3D Geometric Mesh (Cyber Torus / Cube)
+      const vertices = [
+        [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+        [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+      ];
+
+      const faces = [
+        [0, 1, 2, 3, '#00a2ff'],
+        [4, 5, 6, 7, '#0284c7'],
+        [0, 1, 5, 4, '#0ea5e9'],
+        [2, 3, 7, 6, '#38bdf8'],
+        [0, 3, 7, 4, '#0369a1'],
+        [1, 2, 6, 5, '#7dd3fc']
+      ];
+
+      const projected = vertices.map(([x, y, z]) => {
+        // Rotate Y
+        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+        // Rotate X
+        let y2 = y * Math.cos(rotX) - z1 * Math.sin(rotX);
+        let z2 = y * Math.sin(rotX) + z1 * Math.cos(rotX);
+        return {
+          x: cx + x1 * scale,
+          y: cy + y2 * scale,
+          z: z2
+        };
+      });
+
+      faces.forEach(([i1, i2, i3, i4, col]) => {
+        const p1 = projected[i1], p2 = projected[i2], p3 = projected[i3], p4 = projected[i4];
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p4.x, p4.y);
+        ctx.closePath();
+
+        if (currentShading === 'wireframe') {
+          ctx.strokeStyle = '#00a2ff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else if (currentShading === 'normals') {
+          ctx.fillStyle = `rgba(${Math.abs(Math.sin(rotY))*255}, ${Math.abs(Math.cos(rotX))*255}, 200, 0.8)`;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.stroke();
+        } else if (currentShading === 'xray') {
+          ctx.fillStyle = 'rgba(0, 162, 255, 0.15)';
+          ctx.fill();
+          ctx.strokeStyle = '#00a2ff';
+          ctx.stroke();
+        } else if (currentShading === 'flat') {
+          ctx.fillStyle = '#64748b';
+          ctx.fill();
+        } else {
+          // Rendered
+          ctx.fillStyle = col;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.stroke();
+        }
+      });
+
+      drawGizmo();
+    }
+
+    function drawGizmo() {
+      gizmoCtx.clearRect(0, 0, 80, 80);
+      const gcx = 40, gcy = 40, glen = 26;
+
+      function drawAxis(dx, dy, dz, color, label) {
+        let x1 = dx * Math.cos(rotY) - dz * Math.sin(rotY);
+        let z1 = dx * Math.sin(rotY) + dz * Math.cos(rotY);
+        let y2 = dy * Math.cos(rotX) - z1 * Math.sin(rotX);
+
+        gizmoCtx.strokeStyle = color;
+        gizmoCtx.lineWidth = 2;
+        gizmoCtx.beginPath();
+        gizmoCtx.moveTo(gcx, gcy);
+        gizmoCtx.lineTo(gcx + x1 * glen, gcy + y2 * glen);
+        gizmoCtx.stroke();
+
+        gizmoCtx.fillStyle = color;
+        gizmoCtx.font = 'bold 9px sans-serif';
+        gizmoCtx.fillText(label, gcx + x1 * glen + (x1 > 0 ? 3 : -7), gcy + y2 * glen + (y2 > 0 ? 8 : -3));
+      }
+
+      drawAxis(1, 0, 0, '#ef4444', 'X');
+      drawAxis(0, -1, 0, '#22c55e', 'Y');
+      drawAxis(0, 0, 1, '#3b82f6', 'Z');
+    }
+
+    // ==========================================
+    // WEBSOCKET IPC BUS DISPATCH
+    // ==========================================
+    const APP_ID = 'com.elix.studio3d';
+
+    function connectBridge() {
+      const dot = document.getElementById('ws-dot');
+      const text = document.getElementById('ws-text');
+
+      function dispatchIpcMessage(raw) {
+        try {
+          const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE') {
+            window.close();
+            return;
+          }
+
+          if (msg.appId && msg.appId !== APP_ID && msg.appId !== 'unknown' && !msg.appId.includes('studio3d')) {
+            return;
+          }
+
+          const capability = String(msg.capability || msg.payload?.capability || msg.tool || msg.result?.capability || '');
+          const data = msg.args || msg.payload?.args || msg.result?.data || msg.result?.receivedParams || msg.data || {};
+
+          if (capability.includes('set_viewport_shading')) {
+            if (data.mode) setShading(data.mode);
+            return;
+          }
+
+          if (capability.includes('set_environment_lighting')) {
+            if (data.preset) setLighting(data.preset);
+            return;
+          }
+
+          if (capability.includes('load_model')) {
+            draw3DScene();
+            return;
+          }
+        } catch (err) {
+          console.error('3DStudio IPC dispatch error:', err);
+        }
+      }
+
+      try {
+        const socket = new WebSocket('ws://127.0.0.1:7391/?appId=' + encodeURIComponent(APP_ID));
+        socket.onopen = () => {
+          dot.className = 'status-dot online';
+          text.innerText = 'Connected to ELIX IPC Bridge (127.0.0.1:7391)';
+          socket.send(JSON.stringify({ type: 'REGISTER', appId: APP_ID }));
+        };
+        socket.onmessage = (event) => dispatchIpcMessage(event.data);
+        socket.onerror = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'WebSocket Error (127.0.0.1:7391)';
+        };
+        socket.onclose = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'Bridge Disconnected. Reconnecting...';
+          setTimeout(connectBridge, 1500);
+        };
+      } catch (err) {
+        dot.className = 'status-dot';
+        text.innerText = 'Connection blocked: ' + err.message;
+        setTimeout(connectBridge, 1500);
+      }
+    }
+
+    setTimeout(resizeCanvas, 50);
+    connectBridge();
+  </script>
+</body>
+</html>

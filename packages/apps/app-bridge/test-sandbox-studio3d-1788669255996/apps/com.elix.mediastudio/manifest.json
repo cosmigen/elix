@@ -1,0 +1,115 @@
+{
+  "manifestVersion": "1.0",
+  "appId": "com.elix.mediastudio",
+  "name": "ELIX Media Studio",
+  "version": "1.0.0",
+  "description": "Professional creative studio for image adjustments, precision audio/video trimming, and batch format conversion in ELIX OS",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "author": "ELIX Creative Labs",
+  "window": {
+    "width": 1120,
+    "height": 720,
+    "minWidth": 800,
+    "minHeight": 520,
+    "resizable": true
+  },
+  "permissions": [
+    {
+      "permission": "fs:read",
+      "reason": "Import local images, audio, and video files for editing"
+    },
+    {
+      "permission": "fs:write",
+      "reason": "Export edited assets and rendered media files"
+    },
+    {
+      "permission": "ui:notification",
+      "reason": "Notify when rendering or batch export completes"
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "edit_image",
+      "description": "Apply real-time color grading, exposure, contrast, saturation, and blur filters.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sourcePath": { "type": "string", "description": "Source image path" },
+          "brightness": { "type": "number", "description": "Brightness adjustment (-100 to 100)" },
+          "contrast": { "type": "number", "description": "Contrast adjustment (-100 to 100)" },
+          "saturation": { "type": "number", "description": "Saturation adjustment (-100 to 100)" },
+          "blur": { "type": "number", "description": "Gaussian blur radius (0 to 50)" }
+        },
+        "required": ["sourcePath"]
+      }
+    },
+    {
+      "name": "crop_resize",
+      "description": "Crop canvas selection and resample image dimensions.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sourcePath": { "type": "string", "description": "Source image path" },
+          "cropRect": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "width": { "type": "number" },
+              "height": { "type": "number" }
+            }
+          },
+          "targetDimensions": {
+            "type": "object",
+            "properties": {
+              "width": { "type": "number" },
+              "height": { "type": "number" }
+            }
+          },
+          "maintainAspectRatio": { "type": "boolean" }
+        },
+        "required": ["sourcePath"]
+      }
+    },
+    {
+      "name": "trim_media",
+      "description": "Trim timeline intervals on audio/video tracks with frame accuracy.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sourcePath": { "type": "string", "description": "Media file path" },
+          "startTimestampSeconds": { "type": "number", "description": "Start timestamp in seconds" },
+          "endTimestampSeconds": { "type": "number", "description": "End timestamp in seconds" },
+          "outputFormat": { "type": "string", "description": "Target container format" }
+        },
+        "required": ["sourcePath", "startTimestampSeconds", "endTimestampSeconds"]
+      }
+    },
+    {
+      "name": "convert_format",
+      "description": "Transcode media assets into target formats with compression presets.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sourcePath": { "type": "string", "description": "Source asset path" },
+          "targetFormat": { "type": "string", "enum": ["png", "jpeg", "webp", "mp4", "webm", "mp3", "wav"] },
+          "qualityPreset": { "type": "string", "enum": ["high", "medium", "low"] }
+        },
+        "required": ["sourcePath", "targetFormat"]
+      }
+    },
+    {
+      "name": "export_asset",
+      "description": "Render and export finalized asset with color profile metadata.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "destinationPath": { "type": "string", "description": "Destination file path" },
+          "metadataOptions": { "type": "object" }
+        },
+        "required": ["destinationPath"]
+      }
+    }
+  ]
+}

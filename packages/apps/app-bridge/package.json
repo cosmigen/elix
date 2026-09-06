@@ -1,0 +1,114 @@
+{
+  "name": "@deepseek-ai/elix-app-bridge",
+  "version": "1.0.0",
+  "description": "ELIX Native App Runtime & Dynamic App Bridge plugin for Cordis Microkernel",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    },
+    "./validator": {
+      "types": "./dist/validator.d.ts",
+      "import": "./dist/validator.js"
+    },
+    "./installer": {
+      "types": "./dist/installer.d.ts",
+      "import": "./dist/installer.js"
+    },
+    "./ipc-channel": {
+      "types": "./dist/ipc-channel.d.ts",
+      "import": "./dist/ipc-channel.js"
+    },
+    "./window-manager": {
+      "types": "./dist/window-manager.d.ts",
+      "import": "./dist/window-manager.js"
+    },
+    "./tool-registry": {
+      "types": "./dist/tool-registry.d.ts",
+      "import": "./dist/tool-registry.js"
+    },
+    "./management-tools": {
+      "types": "./dist/management-tools.d.ts",
+      "import": "./dist/management-tools.js"
+    },
+    "./capability-stub": {
+      "types": "./dist/capability-stub.d.ts",
+      "import": "./dist/capability-stub.js"
+    },
+    "./adapters/ports": {
+      "types": "./dist/adapters/ports.d.ts",
+      "import": "./dist/adapters/ports.js"
+    },
+    "./app-manager": {
+      "types": "./dist/app-manager.d.ts",
+      "import": "./dist/app-manager.js"
+    },
+    "./data/storage-partition": {
+      "types": "./dist/data/storage-partition.d.ts",
+      "import": "./dist/data/storage-partition.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/validator.test.ts",
+    "test:all": "node tests/runner.mjs",
+    "tui": "tsx src/tui/test-harness.ts",
+    "demo": "tsx src/tui/automated-demo.ts",
+    "showcase": "powershell -ExecutionPolicy Bypass -File run-visible-demo.ps1"
+  },
+  "keywords": [
+    "elix",
+    "cordis",
+    "runtime",
+    "app-bridge",
+    "ipc",
+    "microkernel",
+    "agent-os"
+  ],
+  "author": "DeepSeek AI / ELIX Core Team",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "adm-zip": "^0.5.16",
+    "hyperformula": "^2.7.0",
+    "mammoth": "^1.8.0",
+    "nanoid": "^5.0.7",
+    "pdfjs-dist": "^4.4.168",
+    "semver": "^7.6.3",
+    "systeminformation": "^5.22.11",
+    "ws": "^8.18.0",
+    "xlsx": "^0.18.5"
+  },
+  "peerDependencies": {
+    "cordis": "^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "cordis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/node": "^20.14.9",
+    "@types/semver": "^7.5.8",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.2"
+  }
+}

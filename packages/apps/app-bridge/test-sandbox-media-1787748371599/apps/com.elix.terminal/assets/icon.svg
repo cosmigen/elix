@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="term-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="term-prompt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#00a2ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#term-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- Terminal Header Dots -->
+  <circle cx="11" cy="11" r="1.8" fill="#ef4444" />
+  <circle cx="16" cy="11" r="1.8" fill="#f59e0b" />
+  <circle cx="21" cy="11" r="1.8" fill="#10b981" />
+  <!-- Prompt Chevron > -->
+  <path d="M12 21 L20 27 L12 33" fill="none" stroke="url(#term-prompt-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Cursor Block _ -->
+  <rect x="24" y="30" width="10" height="3" rx="1" fill="#38bdf8" />
+</svg>

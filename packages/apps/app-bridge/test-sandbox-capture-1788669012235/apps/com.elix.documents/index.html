@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIX Documents</title>
+  <style>
+    :root {
+      --bg: #090d18;
+      --paper-bg: #141d33;
+      --paper-text: #f1f5f9;
+      --panel: #111a2f;
+      --panel-alt: #17233e;
+      --panel-hover: #1d2c4e;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(0, 162, 255, 0.45);
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+      --muted: #64748b;
+
+      --accent: #00a2ff;
+      --accent-glow: rgba(0, 162, 255, 0.35);
+      --highlight-yellow: rgba(234, 179, 8, 0.4);
+      --highlight-green: rgba(34, 197, 94, 0.4);
+      --highlight-blue: rgba(59, 130, 246, 0.4);
+      --highlight-pink: rgba(236, 72, 153, 0.4);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      user-select: none;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 42px;
+      background: #0a0f1d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .titlebar-brand svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Segmented Liquid Metal Controls Capsule Frame */
+    .liquid-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 4px;
+      background: linear-gradient(180deg, #182844 0%, #101c33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+      -webkit-app-region: no-drag;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .liquid-divider {
+      width: 1px;
+      height: 16px;
+      background: linear-gradient(180deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.07) 30%, 
+        rgba(0, 0, 0, 0.4) 70%, 
+        transparent 100%
+      );
+    }
+
+    .liquid-btn {
+      position: relative;
+      width: 32px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      outline: none;
+      padding: 0;
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .liquid-glyph {
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+      transition: filter 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .liquid-btn:hover .liquid-glyph {
+      transform: scale(1.08);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 255, 255, 0.65))
+        drop-shadow(0 0 10px rgba(186, 215, 255, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn.btn-close:hover .liquid-glyph {
+      transform: scale(1.08) rotate(4deg);
+      filter: 
+        drop-shadow(0 0 4px rgba(255, 120, 140, 0.75))
+        drop-shadow(0 0 10px rgba(244, 63, 94, 0.45))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+    }
+
+    .liquid-btn:active .liquid-glyph {
+      transform: scale(0.92);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Top Mode Selector & Tool Ribbon */
+    .top-ribbon {
+      height: 48px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 12px;
+    }
+
+    .mode-pills {
+      display: flex;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--subtext);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .mode-btn.active, .mode-btn:hover {
+      background: var(--panel-hover);
+      color: var(--text);
+    }
+
+    .mode-btn.active {
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .ribbon-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      gap: 6px;
+      width: 220px;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 11.5px;
+      outline: none;
+      width: 100%;
+    }
+
+    .action-btn {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-size: 11.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      background: var(--panel-hover);
+      color: var(--text);
+      border-color: var(--border-focus);
+    }
+
+    /* Main Workspace Layout */
+    .docs-workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Outline, Thumbnails & Meta */
+    .sidebar {
+      width: 260px;
+      background: #0b1120;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: #090e1b;
+    }
+
+    .sidebar-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: var(--panel);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .outline-item {
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--subtext);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .outline-item:hover {
+      background: var(--panel-hover);
+      color: var(--text);
+    }
+
+    .outline-item.h1 { font-weight: 600; color: var(--text); }
+    .outline-item.h2 { margin-left: 12px; }
+    .outline-item.h3 { margin-left: 24px; font-size: 11px; }
+
+    .thumbnail-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: border 0.15s;
+    }
+
+    .thumbnail-card.active, .thumbnail-card:hover {
+      border-color: var(--accent);
+    }
+
+    .thumbnail-sheet {
+      width: 100%;
+      height: 110px;
+      background: #1e293b;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      gap: 4px;
+    }
+
+    .thumb-line {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+    }
+
+    .meta-stat-group {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11.5px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .meta-val {
+      font-family: monospace;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Document Viewport Canvas Area */
+    .document-viewport {
+      flex: 1;
+      background: #080c16;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* Paper Document Card */
+    .paper-page {
+      width: 760px;
+      min-height: 980px;
+      background: var(--paper-bg);
+      color: var(--paper-text);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 48px 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      user-select: text;
+      position: relative;
+    }
+
+    .paper-header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #38bdf8;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+    }
+
+    .paper-paragraph {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+
+    .highlighted {
+      background: var(--highlight-yellow);
+      border-radius: 2px;
+      padding: 1px 2px;
+    }
+
+    /* Markdown Split Editor */
+    .markdown-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      gap: 12px;
+    }
+
+    .md-pane {
+      flex: 1;
+      height: 100%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .md-textarea {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+
+    /* Spreadsheet Grid View */
+    .spreadsheet-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .formula-bar {
+      height: 36px;
+      background: var(--panel-alt);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+    }
+
+    .cell-id-badge {
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--accent);
+      min-width: 32px;
+    }
+
+    .formula-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: monospace;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .sheet-grid {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+
+    .sheet-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .sheet-table th, .sheet-table td {
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      min-width: 100px;
+      height: 28px;
+    }
+
+    .sheet-table th {
+      background: #090e1a;
+      color: var(--subtext);
+      font-weight: 600;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .sheet-table td.row-num {
+      background: #090e1a;
+      color: var(--muted);
+      width: 45px;
+      min-width: 45px;
+      text-align: center;
+      position: sticky;
+      left: 0;
+      z-index: 9;
+    }
+
+    .sheet-table td.active-cell {
+      outline: 2px solid var(--accent);
+      background: rgba(0, 162, 255, 0.1);
+    }
+
+    /* Slide Deck Mode */
+    .slides-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .slide-card {
+      width: 820px;
+      height: 460px;
+      background: linear-gradient(135deg, #111a2f 0%, #0d1424 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .slide-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    .slide-body {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #e2e8f0;
+    }
+
+    .slide-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status Bar */
+    .statusbar {
+      height: 26px;
+      background: #060910;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 11px;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    .status-badge { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
+    .status-dot.online { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <!-- Titlebar -->
+  <div class="titlebar">
+    <div class="titlebar-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+      </svg>
+      <span id="doc-title-brand">ELIX Documents • architecture_specs.pdf</span>
+    </div>
+
+    <!-- Segmented Liquid Metal Controls Capsule -->
+    <div class="liquid-capsule">
+      <svg width="0" height="0" style="position: absolute;">
+        <defs>
+          <linearGradient id="liquid-chrome-grad-docs" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#e2e8f0" />
+            <stop offset="50%" stop-color="#94a3b8" />
+            <stop offset="75%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Minimize -->
+      <button class="liquid-btn" id="btn-minimize" title="Minimize">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M7 16 C7 14.3, 8.3 13, 10 13 L22 13 C23.7 13, 25 14.3, 25 16 C25 17.7, 23.7 19, 22 19 L10 19 C8.3 19, 7 17.7, 7 16 Z" fill="url(#liquid-chrome-grad-docs)" />
+          <path d="M10 14.5 L22 14.5" stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.8" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Maximize / Restore -->
+      <button class="liquid-btn" id="btn-maximize" title="Maximize / Restore">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M16 7 C18 7, 23 9.5, 23 11 C23 12.5, 18 15, 16 15 C14 15, 9 12.5, 9 11 C9 9.5, 14 7, 16 7 Z" fill="url(#liquid-chrome-grad-docs)" />
+          <path d="M14 8.5 C16 8.5, 21 10.2, 21 11" stroke="#ffffff" stroke-width="0.8" stroke-linecap="round" opacity="0.8" fill="none" />
+          <path d="M9 14.5 C11 16, 14 17.5, 16 17.5 C18 17.5, 21 16, 23 14.5" stroke="url(#liquid-chrome-grad-docs)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+          <path d="M9 19 C11 20.5, 14 22, 16 22 C18 22, 21 20.5, 23 19" stroke="url(#liquid-chrome-grad-docs)" stroke-width="2.6" stroke-linecap="round" fill="none" />
+        </svg>
+      </button>
+
+      <div class="liquid-divider"></div>
+
+      <!-- Close -->
+      <button class="liquid-btn btn-close" id="btn-close" title="Close">
+        <svg class="liquid-glyph" viewBox="0 0 32 32">
+          <path d="M11 9 C9.5 9, 8.5 10.5, 9.5 12 C10.8 13.5, 13.5 16, 13.5 16 C13.5 16, 10.8 18.5, 9.5 20 C8.5 21.5, 9.5 23, 11 23 C12.5 23, 14.5 20.8, 16 19 C17.5 20.8, 19.5 23, 21 23 C22.5 23, 23.5 21.5, 22.5 20 C21.2 18.5, 18.5 16, 18.5 16 C18.5 16, 21.2 13.5, 22.5 12 C23.5 10.5, 22.5 9, 21 9 C19.5 9, 17.5 11.2, 16 13 C14.5 11.2, 12.5 9, 11 9 Z" fill="url(#liquid-chrome-grad-docs)" />
+          <circle cx="11.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+          <circle cx="20.5" cy="11.5" r="0.8" fill="#ffffff" opacity="0.9" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Top Mode Selector & Tool Ribbon -->
+  <div class="top-ribbon">
+    <div class="mode-pills">
+      <button class="mode-btn active" id="mode-pdf" onclick="switchMode('pdf')">📄 PDF / DOCX</button>
+      <button class="mode-btn" id="mode-md" onclick="switchMode('md')">📝 Markdown / Text</button>
+      <button class="mode-btn" id="mode-sheet" onclick="switchMode('sheet')">📊 Spreadsheet (CSV)</button>
+      <button class="mode-btn" id="mode-slide" onclick="switchMode('slide')">📽 Slides Deck</button>
+    </div>
+
+    <div class="ribbon-actions">
+      <!-- Search Box -->
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search in document (Ctrl+F)..." id="search-input" onkeyup="handleSearch(event)" />
+      </div>
+
+      <button class="action-btn" onclick="highlightSelection('yellow')">🖍 Highlight</button>
+      <button class="action-btn" onclick="exportDoc()">💾 Export</button>
+    </div>
+  </div>
+
+  <!-- Main Workspace -->
+  <div class="docs-workspace">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active" id="tab-outline" onclick="switchSidebarTab('outline')">Outline</div>
+        <div class="sidebar-tab" id="tab-thumbs" onclick="switchSidebarTab('thumbs')">Pages</div>
+        <div class="sidebar-tab" id="tab-meta" onclick="switchSidebarTab('meta')">Metadata</div>
+      </div>
+
+      <div class="sidebar-content" id="sidebar-content-pane">
+        <!-- Outline Pane -->
+        <div id="pane-outline">
+          <div class="outline-item h1">1. Executive Summary</div>
+          <div class="outline-item h2">1.1 Core Architecture</div>
+          <div class="outline-item h2">1.2 Security Sandbox</div>
+          <div class="outline-item h1">2. IPC Communication Bus</div>
+          <div class="outline-item h2">2.1 Protocol Specifications</div>
+          <div class="outline-item h3">2.1.1 Message Frames</div>
+          <div class="outline-item h1">3. Automated Test Verification</div>
+        </div>
+
+        <!-- Thumbnails Pane (hidden by default) -->
+        <div id="pane-thumbs" style="display:none; gap:10px; flex-direction:column;">
+          <div class="thumbnail-card active">
+            <div class="thumbnail-sheet">
+              <div class="thumb-line" style="width:60%;"></div>
+              <div class="thumb-line" style="width:90%;"></div>
+              <div class="thumb-line" style="width:75%;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--subtext);">Page 1</span>
+          </div>
+          <div class="thumbnail-card">
+            <div class="thumbnail-sheet">
+              <div class="thumb-line" style="width:80%;"></div>
+              <div class="thumb-line" style="width:85%;"></div>
+              <div class="thumb-line" style="width:50%;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--subtext);">Page 2</span>
+          </div>
+        </div>
+
+        <!-- Metadata Pane (hidden by default) -->
+        <div id="pane-meta" style="display:none; gap:10px; flex-direction:column;">
+          <div class="meta-stat-group">
+            <div class="meta-row"><span>Document Name:</span><span class="meta-val">architecture_specs.pdf</span></div>
+            <div class="meta-row"><span>Format:</span><span class="meta-val">PDF 1.7</span></div>
+            <div class="meta-row"><span>Page Count:</span><span class="meta-val">24 Pages</span></div>
+            <div class="meta-row"><span>Word Count:</span><span class="meta-val">8,450 Words</span></div>
+            <div class="meta-row"><span>Reading Time:</span><span class="meta-val">~32 mins</span></div>
+            <div class="meta-row"><span>File Size:</span><span class="meta-val">1.8 MB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Viewport Canvas -->
+    <div class="document-viewport" id="viewport-canvas">
+      <!-- Mode 1: PDF / DOCX Continuous Canvas -->
+      <div id="view-pdf" class="paper-page">
+        <div class="paper-header">ELIX OS System Architecture Specifications</div>
+        <p class="paper-paragraph">
+          The <strong>ELIX OS Application Bridge</strong> delivers an isolated, capability-secured microkernel architecture designed for autonomous agent pairing and high-performance local tool execution.
+        </p>
+        <p class="paper-paragraph">
+          All native applications run inside hardened Electron container contexts with distinct security permission sets, enforcing strict <span class="highlighted">file system isolation</span> and fine-grained capability indexing.
+        </p>
+        <p class="paper-paragraph">
+          The persistent IPC bus operates via WebSocket duplex streaming on <span class="highlighted">127.0.0.1:7391</span>, ensuring sub-15ms broadcast latency for dynamic agent capability calls.
+        </p>
+      </div>
+
+      <!-- Mode 2: Markdown Split Editor (hidden by default) -->
+      <div id="view-md" class="markdown-container" style="display:none;">
+        <div class="md-pane">
+          <textarea class="md-textarea" id="md-editor"># ELIX Documents Engine
+
+A unified document processing pipeline for ELIX OS.
+
+## Supported Formats
+- **PDF**: Smooth continuous rendering with vector text & highlights.
+- **Markdown / TXT**: Real-time side-by-side editing.
+- **Spreadsheets**: Virtualized 10,000-row calculations.
+- **Slides**: Fullscreen presentation decks.
+
+### Security Guarantees
+1. No external untrusted script execution.
+2. ReDoS-protected regex query engine.
+3. Clamped annotation bounding boxes.</textarea>
+        </div>
+        <div class="md-pane" id="md-preview">
+          <h1 style="color:#38bdf8;margin-bottom:12px;">ELIX Documents Engine</h1>
+          <p style="margin-bottom:12px;color:#cbd5e1;">A unified document processing pipeline for ELIX OS.</p>
+          <h2 style="color:#7dd3fc;margin-bottom:8px;">Supported Formats</h2>
+          <ul style="margin-left:20px;color:#cbd5e1;line-height:1.7;">
+            <li><strong>PDF</strong>: Smooth continuous rendering with vector text & highlights.</li>
+            <li><strong>Markdown / TXT</strong>: Real-time side-by-side editing.</li>
+            <li><strong>Spreadsheets</strong>: Virtualized 10,000-row calculations.</li>
+            <li><strong>Slides</strong>: Fullscreen presentation decks.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Mode 3: Virtualized Spreadsheet Grid (hidden by default) -->
+      <div id="view-sheet" class="spreadsheet-container" style="display:none;">
+        <div class="formula-bar">
+          <span class="cell-id-badge" id="active-cell-id">B2</span>
+          <input type="text" class="formula-input" value="1420.50" id="formula-bar-input" />
+        </div>
+        <div class="sheet-grid">
+          <table class="sheet-table" id="sheet-table-el">
+            <thead>
+              <tr>
+                <th style="width:45px;">#</th>
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th>
+              </tr>
+            </thead>
+            <tbody id="sheet-tbody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mode 4: Slide Deck Mode (hidden by default) -->
+      <div id="view-slide" class="slides-container" style="display:none;">
+        <div class="slide-card">
+          <div class="slide-title">ELIX OS 2.0: The Future of Agentic OS</div>
+          <div class="slide-body">
+            • Unified Native Window & WebSocket IPC Bridge.<br />
+            • Autonomous Tool Ingestion & Runtime Sandbox.<br />
+            • Liquid Metal UI Design Language across all apps.
+          </div>
+          <div class="slide-nav">
+            <button class="action-btn" onclick="prevSlide()">◀ Previous</button>
+            <span style="font-size:12px;color:var(--subtext);" id="slide-num">Slide 1 of 4</span>
+            <button class="action-btn" onclick="nextSlide()">Next ▶</button>
+            <button class="action-btn" onclick="launchFullscreen()">⛶ Fullscreen (F5)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="statusbar">
+    <div class="status-badge">
+      <div class="status-dot" id="ws-dot"></div>
+      <span id="ws-text">Connecting to ELIX IPC Bridge (127.0.0.1:7391)...</span>
+    </div>
+    <span id="doc-status-metrics">PDF Mode • Page 1 of 24 • 8,450 Words • 100% Zoom</span>
+  </div>
+
+  <script>
+    // Electron IPC Window Management
+    const { ipcRenderer } = window.require ? window.require('electron') : (typeof require !== 'undefined' ? require('electron') : { ipcRenderer: { send: () => {} } });
+    document.getElementById('btn-minimize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-minimize');
+    });
+    document.getElementById('btn-maximize')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-maximize');
+    });
+    document.getElementById('btn-close')?.addEventListener('click', () => {
+      if (typeof ipcRenderer !== 'undefined' && ipcRenderer?.send) ipcRenderer.send('app-window-close');
+      else window.close();
+    });
+
+    // App Mode Switching
+    let currentMode = 'pdf';
+    function switchMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('mode-' + mode);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.getElementById('view-pdf').style.display = (mode === 'pdf' ? 'flex' : 'none');
+      document.getElementById('view-md').style.display = (mode === 'md' ? 'flex' : 'none');
+      document.getElementById('view-sheet').style.display = (mode === 'sheet' ? 'flex' : 'none');
+      document.getElementById('view-slide').style.display = (mode === 'slide' ? 'flex' : 'none');
+
+      document.getElementById('doc-status-metrics').innerText = `${mode.toUpperCase()} Mode • Active • 100% Zoom`;
+    }
+
+    // Sidebar Tab Switching
+    function switchSidebarTab(tab) {
+      document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('pane-outline').style.display = (tab === 'outline' ? 'flex' : 'none');
+      document.getElementById('pane-thumbs').style.display = (tab === 'thumbs' ? 'flex' : 'none');
+      document.getElementById('pane-meta').style.display = (tab === 'meta' ? 'flex' : 'none');
+    }
+
+    // Populate Initial Spreadsheet Rows (A-H, 1-50)
+    function populateSpreadsheet() {
+      const tbody = document.getElementById('sheet-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      for (let r = 1; r <= 50; r++) {
+        const tr = document.createElement('tr');
+        const th = document.createElement('td');
+        th.className = 'row-num';
+        th.innerText = r;
+        tr.appendChild(th);
+        for (let c = 0; c < 8; c++) {
+          const colLetter = String.fromCharCode(65 + c);
+          const td = document.createElement('td');
+          td.id = `cell-${colLetter}${r}`;
+          if (r === 1 && c === 0) td.innerText = 'Service Module';
+          else if (r === 1 && c === 1) td.innerText = 'Latency (ms)';
+          else if (r === 2 && c === 0) td.innerText = 'WebSocket Bus';
+          else if (r === 2 && c === 1) { td.innerText = '0.45'; td.className = 'active-cell'; }
+          else if (r === 3 && c === 0) td.innerText = 'Capability Router';
+          else if (r === 3 && c === 1) td.innerText = '1.20';
+          
+          td.addEventListener('click', () => {
+            document.querySelectorAll('.sheet-table td').forEach(cell => cell.classList.remove('active-cell'));
+            td.classList.add('active-cell');
+            document.getElementById('active-cell-id').innerText = `${colLetter}${r}`;
+            document.getElementById('formula-bar-input').value = td.innerText;
+          });
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+    populateSpreadsheet();
+
+    // Slides Navigation
+    let currentSlideIndex = 1;
+    function prevSlide() {
+      if (currentSlideIndex > 1) currentSlideIndex--;
+      document.getElementById('slide-num').innerText = `Slide ${currentSlideIndex} of 4`;
+    }
+    function nextSlide() {
+      if (currentSlideIndex < 4) currentSlideIndex++;
+      document.getElementById('slide-num').innerText = `Slide ${currentSlideIndex} of 4`;
+    }
+    function launchFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function highlightSelection(color) {
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const span = document.createElement('span');
+      span.className = 'highlighted';
+      span.textContent = selection.toString();
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(span);
+    }
+
+    function exportDoc() {
+      alert('Document exported successfully.');
+    }
+
+    function handleSearch(e) {
+      if (e.key === 'Enter') {
+        const q = document.getElementById('search-input').value;
+        console.log('Search query:', q);
+      }
+    }
+
+    // ==========================================
+    // WEBSOCKET IPC BUS DISPATCH
+    // ==========================================
+    const APP_ID = 'com.elix.documents';
+
+    function connectBridge() {
+      const dot = document.getElementById('ws-dot');
+      const text = document.getElementById('ws-text');
+
+      function dispatchIpcMessage(raw) {
+        try {
+          const msg = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE') {
+            window.close();
+            return;
+          }
+
+          if (msg.appId && msg.appId !== APP_ID && msg.appId !== 'unknown' && !msg.appId.includes('documents')) {
+            return;
+          }
+
+          const capability = String(msg.capability || msg.payload?.capability || msg.tool || msg.result?.capability || '');
+          const data = msg.args || msg.payload?.args || msg.result?.data || msg.result?.receivedParams || msg.data || {};
+
+          if (capability.includes('open_document')) {
+            if (data.format) switchMode(data.format);
+            if (data.filePath) {
+              const name = data.filePath.split(/[/\\]/).pop();
+              document.getElementById('doc-title-brand').innerText = `ELIX Documents • ${name}`;
+            }
+            return;
+          }
+
+          if (capability.includes('edit_spreadsheet_cell')) {
+            switchMode('sheet');
+            if (data.cellCoordinate) {
+              const cell = document.getElementById('cell-' + data.cellCoordinate);
+              if (cell) {
+                cell.innerText = data.value || data.formula || '';
+              }
+            }
+            return;
+          }
+        } catch (err) {
+          console.error('Documents IPC dispatch error:', err);
+        }
+      }
+
+      try {
+        const socket = new WebSocket('ws://127.0.0.1:7391/?appId=' + encodeURIComponent(APP_ID));
+        socket.onopen = () => {
+          dot.className = 'status-dot online';
+          text.innerText = 'Connected to ELIX IPC Bridge (127.0.0.1:7391)';
+          socket.send(JSON.stringify({ type: 'REGISTER', appId: APP_ID }));
+        };
+        socket.onmessage = (event) => dispatchIpcMessage(event.data);
+        socket.onerror = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'WebSocket Error (127.0.0.1:7391)';
+        };
+        socket.onclose = () => {
+          dot.className = 'status-dot';
+          text.innerText = 'Bridge Disconnected. Reconnecting...';
+          setTimeout(connectBridge, 1500);
+        };
+      } catch (err) {
+        dot.className = 'status-dot';
+        text.innerText = 'Connection blocked: ' + err.message;
+        setTimeout(connectBridge, 1500);
+      }
+    }
+
+    connectBridge();
+  </script>
+</body>
+</html>

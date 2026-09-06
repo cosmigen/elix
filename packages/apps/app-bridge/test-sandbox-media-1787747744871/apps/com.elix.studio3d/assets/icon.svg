@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="cube-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="cube-grad-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="cube-grad-3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7dd3fc" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <filter id="cube-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="48" height="48" rx="10" fill="#080c16" />
+  <rect width="46" height="46" x="1" y="1" rx="9" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+
+  <!-- Isometric 3D Wireframe / Shaded Cube -->
+  <g transform="translate(0, 1)" filter="url(#cube-glow)">
+    <!-- Top Face -->
+    <path d="M 24 10 L 38 18 L 24 26 L 10 18 Z" fill="url(#cube-grad-3)" />
+    <!-- Left Face -->
+    <path d="M 10 18 L 24 26 L 24 38 L 10 30 Z" fill="url(#cube-grad-2)" />
+    <!-- Right Face -->
+    <path d="M 24 26 L 38 18 L 38 30 L 24 38 Z" fill="url(#cube-grad-1)" />
+
+    <!-- Inner Axis Vertices & Nodes -->
+    <circle cx="24" cy="10" r="1.8" fill="#ffffff" />
+    <circle cx="38" cy="18" r="1.8" fill="#ffffff" />
+    <circle cx="10" cy="18" r="1.8" fill="#ffffff" />
+    <circle cx="24" cy="26" r="2.2" fill="#ffffff" stroke="#00a2ff" stroke-width="1.2" />
+    <circle cx="24" cy="38" r="1.8" fill="#ffffff" />
+    <circle cx="38" cy="30" r="1.8" fill="#ffffff" />
+    <circle cx="10" cy="30" r="1.8" fill="#ffffff" />
+  </g>
+</svg>

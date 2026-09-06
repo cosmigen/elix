@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="search-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111a2d" />
+      <stop offset="100%" stop-color="#080c16" />
+    </linearGradient>
+    <linearGradient id="search-accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#00a2ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#search-bg-grad)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.4))" />
+  <!-- Glowing Magnifying Lens -->
+  <circle cx="21" cy="21" r="9" fill="none" stroke="url(#search-accent-grad)" stroke-width="2.5" />
+  <path d="M28 28 L36 36" stroke="url(#search-accent-grad)" stroke-width="2.8" stroke-linecap="round" />
+  <!-- Sparkle Beam inside Lens -->
+  <circle cx="21" cy="21" r="3" fill="#38bdf8" opacity="0.6" />
+</svg>

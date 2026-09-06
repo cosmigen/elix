@@ -1,0 +1,112 @@
+{
+  "id": "com.elix.code",
+  "name": "ELIX Code",
+  "version": "1.0.0",
+  "description": "High-performance developer workspace with syntax highlighting, Git diff analysis, and SQLite database inspector for ELIX OS",
+  "author": {
+    "name": "ELIX Core Systems Team",
+    "email": "code@elix.os",
+    "url": "https://elix.os"
+  },
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "window": {
+    "width": 1180,
+    "height": 780,
+    "minWidth": 800,
+    "minHeight": 520,
+    "resizable": true,
+    "alwaysOnTop": false,
+    "frame": false,
+    "transparent": true,
+    "center": true,
+    "backgroundColor": "#070b14"
+  },
+  "permissions": [
+    "fs:read",
+    "fs:write",
+    "clipboard:read",
+    "clipboard:write",
+    "db:sqlite",
+    "vcs:git",
+    "ui:notification"
+  ],
+  "capabilities": {
+    "open_code_file": {
+      "name": "open_code_file",
+      "description": "Open a source code or data file into the active editor buffer with syntax highlighting and focus",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filePath": { "type": "string", "description": "Absolute or relative file path to open" },
+          "language": { "type": "string", "description": "Explicit language identifier (typescript, python, json, sql, etc.)" },
+          "lineFocus": { "type": "number", "description": "Line number to scroll and highlight focus on" }
+        },
+        "required": ["filePath"]
+      }
+    },
+    "save_code_file": {
+      "name": "save_code_file",
+      "description": "Save code editor buffer contents to disk",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filePath": { "type": "string", "description": "Destination file path" },
+          "content": { "type": "string", "description": "Text source code content to write" }
+        },
+        "required": ["filePath", "content"]
+      }
+    },
+    "format_document": {
+      "name": "format_document",
+      "description": "Format and beautify structured code or markup with syntax validation",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "content": { "type": "string", "description": "Raw unformatted source content" },
+          "language": { "type": "string", "enum": ["json", "yaml", "xml", "typescript", "python", "sql", "markdown", "html", "css"], "description": "Language formatter mode" }
+        },
+        "required": ["content", "language"]
+      }
+    },
+    "get_git_diff": {
+      "name": "get_git_diff",
+      "description": "Inspect Git workspace status and generate side-by-side diff changes",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repoPath": { "type": "string", "description": "Git repository root directory" },
+          "stagedOnly": { "type": "boolean", "description": "Inspect only staged changes" },
+          "filePathFilter": { "type": "string", "description": "Optional file path filter pattern" }
+        }
+      }
+    },
+    "inspect_database_table": {
+      "name": "inspect_database_table",
+      "description": "Inspect schema metadata, columns, and records of an SQLite database table",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "dbPath": { "type": "string", "description": "Path to SQLite database file" },
+          "tableName": { "type": "string", "description": "Target database table name" },
+          "limit": { "type": "number", "description": "Max rows to fetch" },
+          "offset": { "type": "number", "description": "Row pagination offset" },
+          "filterSql": { "type": "string", "description": "Optional WHERE clause filter" }
+        },
+        "required": ["dbPath", "tableName"]
+      }
+    },
+    "execute_sql_query": {
+      "name": "execute_sql_query",
+      "description": "Execute raw SQL query string against SQLite database and return result sets",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "dbPath": { "type": "string", "description": "Path to SQLite database file" },
+          "query": { "type": "string", "description": "SQL statement string to execute" }
+        },
+        "required": ["dbPath", "query"]
+      }
+    }
+  }
+}

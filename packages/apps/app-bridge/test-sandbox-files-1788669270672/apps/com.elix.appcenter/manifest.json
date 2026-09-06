@@ -1,0 +1,115 @@
+{
+  "id": "com.elix.appcenter",
+  "name": "ELIX App Center",
+  "version": "1.0.0",
+  "description": "App store, package manager, and extension registry for discovering and installing .ELIXAPP bundles on ELIX OS",
+  "author": {
+    "name": "ELIX Ecosystem Engineering",
+    "email": "appcenter@elix.os",
+    "url": "https://elix.os"
+  },
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "window": {
+    "width": 1180,
+    "height": 780,
+    "minWidth": 860,
+    "minHeight": 560,
+    "resizable": true,
+    "alwaysOnTop": false,
+    "frame": false,
+    "transparent": true,
+    "center": true,
+    "backgroundColor": "#080c16"
+  },
+  "permissions": [
+    "system:package_management",
+    "fs:read",
+    "fs:write",
+    "network:download",
+    "ui:notification"
+  ],
+  "capabilities": {
+    "list_installed_apps": {
+      "name": "list_installed_apps",
+      "description": "Enumerate installed native applications and extensions on ELIX OS with category filtering",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "includeSystemApps": { "type": "boolean", "description": "Include core OS system applications" },
+          "filterCategory": { "type": "string", "description": "Optional category filter" }
+        }
+      }
+    },
+    "search_store_catalog": {
+      "name": "search_store_catalog",
+      "description": "Search the cloud/local App Center catalog with keyword matching, category filters, and sorting",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search keyword query" },
+          "category": {
+            "type": "string",
+            "enum": ["productivity", "developer", "media", "utilities", "ai", "system"],
+            "description": "Filter by catalog category"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": ["popular", "latest", "name"],
+            "description": "Catalog sorting order"
+          }
+        }
+      }
+    },
+    "install_elixapp": {
+      "name": "install_elixapp",
+      "description": "Install, verify, and register a .ELIXAPP package bundle archive",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packagePathOrUrl": { "type": "string", "description": "Local path or remote URL to .ELIXAPP bundle" },
+          "autoGrantPermissions": { "type": "boolean", "description": "Automatically accept declared manifest permissions" },
+          "verifySignature": { "type": "boolean", "description": "Perform integrity checksum & signature verification" }
+        },
+        "required": ["packagePathOrUrl"]
+      }
+    },
+    "uninstall_elixapp": {
+      "name": "uninstall_elixapp",
+      "description": "Uninstall an application and unregister all its AI bridge capabilities",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageId": { "type": "string", "description": "Unique package appId to remove" },
+          "purgeAppData": { "type": "boolean", "description": "Erase application user data and caches" }
+        },
+        "required": ["packageId"]
+      }
+    },
+    "check_for_updates": {
+      "name": "check_for_updates",
+      "description": "Query repository for newer versions of installed packages",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "List of specific package IDs to check, or empty for all"
+          }
+        }
+      }
+    },
+    "inspect_package_manifest": {
+      "name": "inspect_package_manifest",
+      "description": "Inspect and parse package metadata, declared AI tools, permissions, and integrity hash",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageIdOrBundlePath": { "type": "string", "description": "Package identifier or absolute path to .elixapp archive" }
+        },
+        "required": ["packageIdOrBundlePath"]
+      }
+    }
+  }
+}
