@@ -142,13 +142,26 @@ export class NativeWindowHost implements WindowHost {
   }
 
   private resolveElectronBinary(): string | undefined {
-    const names = process.platform === 'win32' ? ['electron.exe', 'electron.cmd'] : ['electron'];
+    // 1. Try to resolve via electron module export if available
+    try {
+      const electronMod = require('electron');
+      if (typeof electronMod === 'string' && fs.existsSync(electronMod)) {
+        return electronMod;
+      }
+    } catch {
+      // module lookup failed
+    }
+
+    // 2. Search local and ancestor directories for electron executables / scripts
+    const names = process.platform === 'win32' ? ['electron.exe', 'electron.cmd', 'electron'] : ['electron'];
     const roots = [
       process.cwd(),
       path.resolve(__dirname, '..'),
       path.resolve(__dirname, '../..'),
       path.resolve(__dirname, '../../..'),
       path.resolve(__dirname, '../../../../..'),
+      'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix',
+      'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch',
     ];
     for (const root of roots) {
       for (const name of names) {
@@ -156,25 +169,6 @@ export class NativeWindowHost implements WindowHost {
         if (fs.existsSync(candidateDist)) return candidateDist;
         const candidateBin = path.join(root, 'node_modules', '.bin', name);
         if (fs.existsSync(candidateBin)) return candidateBin;
-      }
-    }
-    return undefined;
-  }
-
-  private resolveBrowserBinary(): string | undefined {
-    if (process.platform === 'win32') {
-      const candidates = [
-        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-        path.join(process.env['ProgramFiles(x86)'] || '', 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
-        path.join(process.env.ProgramFiles || '', 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
-        path.join(process.env.ProgramFiles || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-        path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
-      ];
-      for (const c of candidates) {
-        if (c && fs.existsSync(c)) return c;
       }
     }
     return undefined;
@@ -206,6 +200,11 @@ export class NativeWindowHost implements WindowHost {
       path.resolve(__dirname, '../native-shell.cjs'),
     ];
     const shellScript = candidates.find((p) => fs.existsSync(p));
+    if (!shellScript) {
+      throw new Error(
+        `[ELIX NativeWindowHost] native-shell.cjs script was not found. Cannot launch window for '${appId}'. Browser fallbacks are permanently disabled.`
+      );
+    }
 
     let safeUrl = targetUrl;
     if (!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://')) {
@@ -219,76 +218,54 @@ export class NativeWindowHost implements WindowHost {
     const isDetached = windowOverrides?.detached ?? true;
 
     const electronBin = this.resolveElectronBinary();
+    if (!electronBin) {
+      throw new Error(
+        `[ELIX NativeWindowHost] Failed to launch Electron window for '${appId}'. Electron binary was not found. Microsoft Edge and browser fallbacks have been permanently disabled.`
+      );
+    }
+
+    const electronArgs = [
+      shellScript,
+      safeUrl,
+      (width || 1180).toString(),
+      (height || 780).toString(),
+      `--url=${safeUrl}`,
+      `--width=${width || 1180}`,
+      `--height=${height || 780}`,
+      `--minWidth=${minWidth}`,
+      `--minHeight=${minHeight}`,
+      `--title=${title || 'ELIX App'}`,
+      `--appId=${appId}`,
+      `--nodeIntegration=${NATIVE_WINDOW_WEB_PREFERENCES.nodeIntegration}`,
+      `--contextIsolation=${NATIVE_WINDOW_WEB_PREFERENCES.contextIsolation}`,
+      `--webSecurity=${NATIVE_WINDOW_WEB_PREFERENCES.webSecurity}`,
+    ];
+
     let child: child_process.ChildProcess | undefined;
-
-    if (electronBin && shellScript) {
-      const electronArgs = [
-        shellScript,
-        `--url=${safeUrl}`,
-        `--width=${width || 680}`,
-        `--height=${height || 600}`,
-        `--minWidth=${minWidth}`,
-        `--minHeight=${minHeight}`,
-        `--title=${title || 'ELIX App'}`,
-        `--appId=${appId}`,
-        `--nodeIntegration=${NATIVE_WINDOW_WEB_PREFERENCES.nodeIntegration}`,
-        `--contextIsolation=${NATIVE_WINDOW_WEB_PREFERENCES.contextIsolation}`,
-        `--webSecurity=${NATIVE_WINDOW_WEB_PREFERENCES.webSecurity}`,
-      ];
-
-      try {
-        child = child_process.spawn(electronBin, electronArgs, {
-          detached: isDetached,
-          stdio: 'ignore',
-          windowsHide: false,
-          shell: false,
-        });
-      } catch {}
+    try {
+      child = child_process.spawn(electronBin, electronArgs, {
+        detached: isDetached,
+        stdio: isDetached ? 'ignore' : 'inherit',
+        windowsHide: false,
+        shell: false,
+      });
+    } catch (err: any) {
+      throw new Error(
+        `[ELIX NativeWindowHost] Failed to spawn Electron process for '${appId}': ${err.message}. Microsoft Edge and browser fallbacks have been permanently disabled.`
+      );
     }
 
     if (!child || !child.pid) {
-      // Fallback directly to native browser application window without cmd.exe string wrapping
-      const browserBin = this.resolveBrowserBinary();
-      if (browserBin) {
-        const browserArgs = [
-          `--app=${safeUrl}`,
-          `--window-size=${width || 680},${height || 600}`,
-          `--window-name=${title || appId}`,
-        ];
-        try {
-          child = child_process.spawn(browserBin, browserArgs, {
-            detached: isDetached,
-            stdio: 'ignore',
-            windowsHide: false,
-            shell: false,
-          });
-        } catch {}
-      } else if (process.platform === 'darwin') {
-        try {
-          child = child_process.spawn('open', ['-a', 'Google Chrome', safeUrl], {
-            detached: isDetached,
-            stdio: 'ignore',
-            shell: false,
-          });
-        } catch {
-          child = child_process.spawn('open', [safeUrl], { detached: isDetached, stdio: 'ignore', shell: false });
-        }
-      } else if (process.platform !== 'win32') {
-        try {
-          child = child_process.spawn('xdg-open', [safeUrl], { detached: isDetached, stdio: 'ignore', shell: false });
-        } catch {}
-      }
+      throw new Error(
+        `[ELIX NativeWindowHost] Electron process failed to initialize (no PID returned) for '${appId}'. Microsoft Edge and browser fallbacks have been permanently disabled.`
+      );
     }
 
-    if (child) {
-      if (isDetached && child.unref) {
-        child.unref();
-      }
-      this.processes.set(appId, child);
-      if (child.pid) {
-        win.pid = child.pid;
-      }
+    if (isDetached && child.unref) {
+      child.unref();
     }
+    this.processes.set(appId, child);
+    win.pid = child.pid;
   }
 
   private killProcessTree(pid: number): void {

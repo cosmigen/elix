@@ -64,15 +64,17 @@ app.commandLine.appendSwitch('no-sandbox');
 
 const requireFromScript = Module.createRequire(__filename);
 
-// Parse CLI arguments
+// Parse CLI arguments (supports both positional args and --key=val flags)
+const args = process.argv.slice(2);
 const getArg = (name, fallback = '') => {
-  const arg = process.argv.find(a => a.startsWith(`--${name}=`));
+  const arg = args.find(a => a.startsWith(`--${name}=`));
   return arg ? arg.split('=').slice(1).join('=').replace(/^["']|["']$/g, '') : fallback;
 };
 
-const rawUrl = getArg('url', 'about:blank');
-const width = parseInt(getArg('width', '1180'), 10) || 1180;
-const height = parseInt(getArg('height', '780'), 10) || 780;
+const positionalNonFlag = args.filter(a => !a.startsWith('--'));
+const rawUrl = getArg('url', positionalNonFlag[0] || 'about:blank');
+const width = parseInt(getArg('width', positionalNonFlag[1] || '1180'), 10) || 1180;
+const height = parseInt(getArg('height', positionalNonFlag[2] || '780'), 10) || 780;
 const minWidth = parseInt(getArg('minWidth', '400'), 10) || 400;
 const minHeight = parseInt(getArg('minHeight', '300'), 10) || 300;
 const title = getArg('title', 'ELIX Application');
