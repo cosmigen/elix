@@ -417,6 +417,48 @@
     .status-badge { display: flex; align-items: center; gap: 6px; }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
     .status-dot.online { background: #22c55e; }
+  
+    /* Brushed Liquid Metal Window Control Capsule */
+    .liquid-metal-capsule {
+      display: inline-flex;
+      align-items: center;
+      background: linear-gradient(180deg, #2a3346 0%, #151b28 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      padding: 3px 6px;
+      gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+    .control-btn {
+      width: 26px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+    }
+    .control-btn svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      fill: none;
+    }
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+    }
+    .control-btn.btn-close:hover {
+      background: rgba(239, 68, 68, 0.9);
+      color: #ffffff;
+    }
+
   </style>
 </head>
 <body>
@@ -853,6 +895,23 @@
     }
 
     connectBridge();
+  
+function sendNativeWindowCommand(channel) {
+  try {
+    if (typeof window !== 'undefined' && window.require) {
+      window.require('electron').ipcRenderer.send(channel);
+      return;
+    }
+    if (window.electron && window.electron.ipcRenderer) {
+      window.electron.ipcRenderer.send(channel);
+      return;
+    }
+  } catch(e) {}
+  if (typeof ws !== 'undefined' && ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ type: 'window_action', action: channel }));
+  }
+}
+
   </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * ws://127.0.0.1:* ws://localhost:*;" />
-  <title>ELIX Center</title>
+  <title>ELIX Center — AI Agent Cockpit & MCP Deck</title>
   <style>
     :root {
       --bg-canvas: #070b14;
@@ -12,6 +12,7 @@
       --bg-rail: #090e1c;
       --bg-card: #0f172a;
       --bg-card-hover: #1e293b;
+      --bg-active-pill: rgba(0, 162, 255, 0.15);
       --border-main: rgba(255, 255, 255, 0.08);
       --border-accent: rgba(0, 162, 255, 0.4);
       --primary-blue: #00a2ff;
@@ -45,7 +46,6 @@
       flex-direction: column;
     }
 
-    /* SVG Gradient Definitions */
     .svg-defs {
       position: absolute;
       width: 0;
@@ -53,9 +53,9 @@
       pointer-events: none;
     }
 
-    /* Top Draggable Title Bar */
+    /* Top Frameless Draggable Titlebar */
     .titlebar {
-      height: 38px;
+      height: 42px;
       background: var(--bg-titlebar);
       border-bottom: 1px solid var(--border-main);
       display: flex;
@@ -63,7 +63,8 @@
       justify-content: space-between;
       padding: 0 14px;
       -webkit-app-region: drag;
-      z-index: 100;
+      user-select: none;
+      z-index: 1000;
     }
 
     .titlebar-left {
@@ -73,12 +74,15 @@
     }
 
     .app-icon {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .titlebar-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-main);
       letter-spacing: 0.3px;
@@ -95,6 +99,7 @@
       align-items: center;
       gap: 5px;
       font-family: var(--font-mono);
+      -webkit-app-region: no-drag;
     }
 
     .pulse-dot {
@@ -111,21 +116,22 @@
       50% { opacity: 0.4; transform: scale(0.8); }
     }
 
-    /* Segmented Liquid Metal Window Controls */
-    .window-controls-capsule {
-      display: flex;
+    /* Brushed Liquid Metal Window Control Capsule */
+    .liquid-metal-capsule, .window-controls-capsule {
+      display: inline-flex;
       align-items: center;
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+      background: linear-gradient(180deg, #2a3346 0%, #151b28 100%);
       border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.5);
       border-radius: 20px;
-      padding: 2px;
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 5px rgba(0, 0, 0, 0.4);
+      padding: 3px 6px;
+      gap: 6px;
       -webkit-app-region: no-drag;
     }
 
     .control-btn {
       width: 26px;
-      height: 20px;
+      height: 22px;
       border: none;
       background: transparent;
       color: var(--text-muted);
@@ -133,44 +139,45 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 8px;
       transition: all 0.15s ease;
     }
 
     .control-btn svg {
-      width: 10px;
-      height: 10px;
+      width: 11px;
+      height: 11px;
       stroke: currentColor;
-      stroke-width: 1.5;
+      stroke-width: 1.6;
       fill: none;
     }
 
     .control-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.15);
       color: var(--text-main);
     }
 
     .control-btn.btn-close:hover {
-      background: rgba(239, 68, 68, 0.85);
+      background: rgba(239, 68, 68, 0.9);
       color: #ffffff;
     }
 
-    /* Main Container Split */
+    /* Workspace Layout */
     .center-workspace {
       flex: 1;
       display: flex;
       overflow: hidden;
     }
 
-    /* Left Activity Rail */
+    /* Left Activity Navigation Rail */
     .activity-rail {
-      width: 220px;
+      width: 230px;
       background: var(--bg-rail);
       border-right: 1px solid var(--border-main);
       display: flex;
       flex-direction: column;
-      padding: 12px 8px;
+      padding: 14px 10px;
       gap: 4px;
+      flex-shrink: 0;
     }
 
     .rail-heading {
@@ -179,10 +186,10 @@
       text-transform: uppercase;
       color: var(--text-dim);
       padding: 8px 10px 4px 10px;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
 
-    .rail-btn {
+    .nav-item {
       display: flex;
       align-items: center;
       gap: 10px;
@@ -196,44 +203,68 @@
       cursor: pointer;
       transition: all 0.15s ease;
       text-align: left;
+      width: 100%;
     }
 
-    .rail-btn:hover {
+    .nav-item:hover {
       background: var(--bg-card);
       color: var(--text-main);
     }
 
-    .rail-btn.active {
-      background: rgba(0, 162, 255, 0.12);
+    .nav-item.active {
+      background: var(--bg-active-pill);
       border-color: rgba(0, 162, 255, 0.35);
       color: var(--primary-cyan);
     }
 
-    .rail-btn-icon {
+    .nav-item-icon {
       font-size: 16px;
-      width: 20px;
+      width: 22px;
       display: flex;
       justify-content: center;
     }
 
-    .rail-badge {
+    .nav-badge {
       margin-left: auto;
       font-size: 10px;
-      padding: 1px 6px;
+      padding: 2px 7px;
       border-radius: 10px;
       background: rgba(168, 85, 247, 0.2);
       color: var(--accent-purple);
       font-family: var(--font-mono);
     }
 
-    /* Main Content Area */
-    .content-viewport {
+    .nav-badge.green {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-emerald);
+    }
+
+    /* Content Area & Multi-View Containers */
+    .content-area {
       flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-canvas);
+    }
+
+    .view-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       overflow-y: auto;
-      padding: 20px;
-      display: flex;
+      padding: 22px;
+      display: none;
       flex-direction: column;
       gap: 20px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .view-panel.active {
+      display: flex;
+      opacity: 1;
     }
 
     .view-header {
@@ -248,18 +279,25 @@
       color: var(--text-main);
     }
 
+    .view-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
     .view-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
+      align-items: center;
     }
 
     .action-btn {
-      padding: 6px 14px;
+      padding: 7px 14px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
       transition: all 0.15s ease;
@@ -281,6 +319,42 @@
       box-shadow: 0 2px 10px rgba(0, 162, 255, 0.3);
     }
 
+    .action-btn.primary:hover {
+      box-shadow: 0 4px 14px rgba(0, 162, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* KPI Summary Stat Bar */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
     /* Agent Cockpit Grid */
     .agent-grid {
       display: grid;
@@ -297,7 +371,6 @@
       flex-direction: column;
       gap: 12px;
       transition: all 0.15s ease;
-      position: relative;
     }
 
     .agent-card:hover {
@@ -318,8 +391,8 @@
     }
 
     .agent-avatar {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: 8px;
       background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
       display: flex;
@@ -341,13 +414,13 @@
     }
 
     .agent-dag-box {
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border-main);
       border-radius: 6px;
-      padding: 10px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
     }
 
     .dag-node {
@@ -355,7 +428,7 @@
       font-family: var(--font-mono);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       color: var(--text-muted);
     }
 
@@ -389,18 +462,18 @@
     /* MCP Server Matrix */
     .mcp-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
     }
 
     .mcp-card {
       background: var(--bg-card);
       border: 1px solid var(--border-main);
       border-radius: 8px;
-      padding: 14px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .mcp-header {
@@ -410,62 +483,240 @@
     }
 
     .mcp-name {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-main);
     }
 
-    .mcp-tools-pill {
+    .mcp-tools-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mcp-tool-tag {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
-      background: rgba(56, 189, 248, 0.15);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
       color: var(--primary-cyan);
       font-family: var(--font-mono);
     }
 
-    /* Trace Waterfall Box */
+    .mcp-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-main);
+      padding-top: 10px;
+      font-size: 11px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 20px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: var(--accent-emerald);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Trace Waterfall Box & Inspector */
+    .trace-container {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 400px;
+    }
+
     .trace-waterfall {
       background: var(--bg-card);
       border: 1px solid var(--border-main);
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-height: 480px;
+      gap: 8px;
       overflow-y: auto;
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .trace-item {
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      padding: 8px;
+      padding: 10px;
       border-radius: 6px;
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.3);
       border-left: 3px solid var(--primary-cyan);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .trace-item:hover, .trace-item.selected {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .trace-item.error {
+      border-left-color: var(--accent-red);
     }
 
     .trace-time {
       color: var(--text-dim);
       font-size: 10px;
-      min-width: 60px;
+      min-width: 55px;
     }
 
     .trace-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
 
     .trace-tag {
       font-size: 10px;
       font-weight: 600;
       color: var(--accent-purple);
+    }
+
+    .trace-inspector {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .inspector-code {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Vector Memory View */
+    .memory-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .search-box-wrap {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      padding: 8px 12px;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .vector-results {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .vector-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .similarity-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent-emerald);
+      margin-left: auto;
+    }
+
+    /* Fleet & Cost Telemetry */
+    .fleet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .fleet-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #a855f7);
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -481,200 +732,599 @@
     </defs>
   </svg>
 
-  <!-- Top Draggable Title Bar -->
+  <!-- Top Frameless Draggable Titlebar -->
   <div class="titlebar">
     <div class="titlebar-left">
-      <img src="assets/icon.svg" class="app-icon" alt="Center Icon" />
+      <div class="app-icon">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 3v18M3 12h18" />
+        </svg>
+      </div>
       <span class="titlebar-title">ELIX Center — AI Agent Cockpit & MCP Deck</span>
       <span class="status-badge">
         <span class="pulse-dot"></span>
-        <span>DAEMON LINK ACTIVE</span>
+        <span>DAEMON LINK ACTIVE (PORT 7391)</span>
       </span>
     </div>
 
-    <!-- Segmented Liquid Metal Controls -->
-    <div class="window-controls-capsule">
-      <button class="control-btn" id="btnMin" title="Minimize" onclick="sendNativeWindowCommand('app-window-minimize')">
+    <!-- Brushed Liquid Metal Window Control Capsule -->
+    <div class="liquid-metal-capsule window-controls-capsule">
+      <button class="control-btn" id="win-min" title="Minimize">
         <svg viewBox="0 0 10 10"><path d="M1 5 L9 5" /></svg>
       </button>
-      <button class="control-btn" id="btnMax" title="Maximize" onclick="sendNativeWindowCommand('app-window-maximize')">
+      <button class="control-btn" id="win-max" title="Maximize">
         <svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1" /></svg>
       </button>
-      <button class="control-btn btn-close" id="btnClose" title="Close" onclick="sendNativeWindowCommand('app-window-close')">
+      <button class="control-btn btn-close" id="win-close" title="Close">
         <svg viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" /></svg>
       </button>
     </div>
   </div>
 
-  <!-- Main Container -->
+  <!-- Main Workspace -->
   <div class="center-workspace">
-    <!-- Left Activity Rail -->
+    <!-- Left Navigation Rail -->
     <div class="activity-rail">
       <div class="rail-heading">Observability</div>
-      <button class="rail-btn active" onclick="switchTab('cockpit')">
-        <span class="rail-btn-icon">⚡</span>
+      <button class="nav-item active" data-view="cockpit">
+        <span class="nav-item-icon">⚡</span>
         <span>Agent Cockpit</span>
-        <span class="rail-badge">2 Active</span>
+        <span class="nav-item-icon nav-badge">2 Active</span>
       </button>
-      <button class="rail-btn" onclick="switchTab('mcp')">
-        <span class="rail-btn-icon">🔌</span>
+      <button class="nav-item" data-view="mcp">
+        <span class="nav-item-icon">🔌</span>
         <span>MCP Servers</span>
-        <span class="rail-badge">5 Online</span>
+        <span class="nav-item-icon nav-badge green">4 Online</span>
       </button>
-      <button class="rail-btn" onclick="switchTab('traces')">
-        <span class="rail-btn-icon">🌊</span>
+      <button class="nav-item" data-view="traces">
+        <span class="nav-item-icon">🌊</span>
         <span>Execution Traces</span>
       </button>
 
-      <div class="rail-heading" style="margin-top: 10px;">Memory & Telemetry</div>
-      <button class="rail-btn" onclick="switchTab('vector')">
-        <span class="rail-btn-icon">🧠</span>
+      <div class="rail-heading" style="margin-top: 14px;">Memory & Telemetry</div>
+      <button class="nav-item" data-view="memory">
+        <span class="nav-item-icon">🧠</span>
         <span>Vector Memory</span>
       </button>
-      <button class="rail-btn" onclick="switchTab('fleet')">
-        <span class="rail-btn-icon">📊</span>
+      <button class="nav-item" data-view="fleet">
+        <span class="nav-item-icon">📊</span>
         <span>Fleet & Token Cost</span>
       </button>
     </div>
 
-    <!-- Main Viewport -->
-    <div class="content-viewport" id="viewport">
-      <div class="view-header">
-        <div>
-          <div class="view-title">Active Agent Runs</div>
-          <div style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">
-            Real-time execution DAGs, sub-goal status, and live token burn rate
+    <!-- Dynamic Content Area -->
+    <main class="content-area">
+      <!-- 1. Agent Cockpit View -->
+      <section class="view-panel active" id="view-cockpit">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Active Agent Runs</h1>
+            <p class="view-subtitle">Real-time DAG progress, sub-agent telemetry, and live token burn rate</p>
+          </div>
+          <div class="view-actions">
+            <button class="action-btn primary" id="btn-spawn-agent">+ Spawn Agent Run</button>
           </div>
         </div>
-        <div class="view-actions">
-          <button class="action-btn primary" onclick="spawnNewAgent()">+ Spawn Agent Run</button>
-        </div>
-      </div>
 
-      <!-- Agent Cockpit Cards -->
-      <div class="agent-grid">
-        <!-- Agent 1 -->
-        <div class="agent-card">
-          <div class="agent-header">
-            <div class="agent-title-group">
-              <div class="agent-avatar">🤖</div>
+        <!-- KPI Metrics -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <span class="stat-label">Active Agents</span>
+            <span class="stat-val">2</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">MCP Pipes</span>
+            <span class="stat-val">4 Online</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Token Burn</span>
+            <span class="stat-val">1,420 <span style="font-size:11px;color:var(--text-dim);">tok/m</span></span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Avg Latency</span>
+            <span class="stat-val">1.1ms</span>
+          </div>
+        </div>
+
+        <!-- Agent Grid -->
+        <div class="agent-grid">
+          <!-- Agent 1 -->
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-title-group">
+                <div class="agent-avatar">🤖</div>
+                <div>
+                  <div class="agent-name">DeepRefactor-Engine</div>
+                  <div class="agent-model">claude-3-5-sonnet · PID: 8841</div>
+                </div>
+              </div>
+              <span class="status-badge"><span class="pulse-dot"></span> RUNNING</span>
+            </div>
+
+            <div class="agent-dag-box">
+              <div class="dag-node">✔ Goal Analysis & Repository Map</div>
+              <div class="dag-node active">▶ [Executing Tool] inspect_database_table (com.elix.code)</div>
+              <div class="dag-node">○ Verify AST Transformation & Run Spec</div>
+            </div>
+
+            <div class="agent-metrics">
               <div>
-                <div class="agent-name">DeepRefactor-Engine</div>
-                <div class="agent-model">claude-3-5-sonnet · PID: 8841</div>
+                <div class="metric-val">1,420</div>
+                <div class="metric-label">Tokens / min</div>
+              </div>
+              <div>
+                <div class="metric-val">18ms</div>
+                <div class="metric-label">MCP Latency</div>
+              </div>
+              <div>
+                <div class="metric-val">$0.042</div>
+                <div class="metric-label">Session Cost</div>
               </div>
             </div>
-            <span class="status-badge"><span class="pulse-dot"></span> RUNNING</span>
           </div>
 
-          <div class="agent-dag-box">
-            <div class="dag-node">✔ Goal Analysis & Repository Map</div>
-            <div class="dag-node active">▶ [Executing Tool] inspect_database_table (com.elix.code)</div>
-            <div class="dag-node">○ Verify AST Transformation & Run Spec</div>
-          </div>
+          <!-- Agent 2 -->
+          <div class="agent-card">
+            <div class="agent-header">
+              <div class="agent-title-group">
+                <div class="agent-avatar" style="background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);">🧠</div>
+                <div>
+                  <div class="agent-name">Telemetry-Synthesizer</div>
+                  <div class="agent-model">gemini-1.5-pro · PID: 9102</div>
+                </div>
+              </div>
+              <span class="status-badge" style="color: var(--accent-purple); border-color: rgba(168,85,247,0.4);"><span class="pulse-dot" style="background: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple);"></span> IDLE</span>
+            </div>
 
-          <div class="agent-metrics">
-            <div>
-              <div class="metric-val">1,420</div>
-              <div class="metric-label">Tokens / min</div>
+            <div class="agent-dag-box">
+              <div class="dag-node">✔ Ingest OS Performance Samples</div>
+              <div class="dag-node">✔ Compute Vector Embeddings</div>
+              <div class="dag-node">○ Awaiting scheduled cron trigger (10m)</div>
             </div>
-            <div>
-              <div class="metric-val">18ms</div>
-              <div class="metric-label">MCP Latency</div>
-            </div>
-            <div>
-              <div class="metric-val">$0.042</div>
-              <div class="metric-label">Session Cost</div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Agent 2 -->
-        <div class="agent-card">
-          <div class="agent-header">
-            <div class="agent-title-group">
-              <div class="agent-avatar" style="background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);">🧠</div>
+            <div class="agent-metrics">
               <div>
-                <div class="agent-name">Telemetry-Synthesizer</div>
-                <div class="agent-model">gemini-1.5-pro · PID: 9102</div>
+                <div class="metric-val">0</div>
+                <div class="metric-label">Tokens / min</div>
+              </div>
+              <div>
+                <div class="metric-val">0.05ms</div>
+                <div class="metric-label">IPC Latency</div>
+              </div>
+              <div>
+                <div class="metric-val">$0.008</div>
+                <div class="metric-label">Session Cost</div>
               </div>
             </div>
-            <span class="status-badge" style="color: var(--accent-purple); border-color: rgba(168,85,247,0.4);"><span class="pulse-dot" style="background: var(--accent-purple); box-shadow: 0 0 8px var(--accent-purple);"></span> IDLE</span>
           </div>
+        </div>
+      </section>
 
-          <div class="agent-dag-box">
-            <div class="dag-node">✔ Ingest OS Performance Samples</div>
-            <div class="dag-node">✔ Compute Vector Embeddings</div>
-            <div class="dag-node">○ Awaiting scheduled cron trigger (10m)</div>
+      <!-- 2. MCP Server Matrix View -->
+      <section class="view-panel" id="view-mcp">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Model Context Protocol (MCP) Matrix</h1>
+            <p class="view-subtitle">Live server bridges, registered tool declarations, and IPC latency metrics</p>
           </div>
+          <div class="view-actions">
+            <button class="action-btn primary" id="btn-add-mcp">+ Register MCP Server</button>
+          </div>
+        </div>
 
-          <div class="agent-metrics">
-            <div>
-              <div class="metric-val">0</div>
-              <div class="metric-label">Tokens / min</div>
+        <div class="mcp-grid">
+          <div class="mcp-card">
+            <div class="mcp-header">
+              <span class="mcp-name">fs-bridge.mcp</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked onchange="toggleMcp('fs-bridge', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
             </div>
-            <div>
-              <div class="metric-val">0.05ms</div>
-              <div class="metric-label">IPC Latency</div>
+            <div class="mcp-tools-list">
+              <span class="mcp-tool-tag">read_file</span>
+              <span class="mcp-tool-tag">write_file</span>
+              <span class="mcp-tool-tag">list_dir</span>
+              <span class="mcp-tool-tag">watch_fs</span>
+              <span class="mcp-tool-tag">stat</span>
+              <span class="mcp-tool-tag">mkdir</span>
+              <span class="mcp-tool-tag">remove</span>
+              <span class="mcp-tool-tag">search</span>
             </div>
-            <div>
-              <div class="metric-val">$0.008</div>
-              <div class="metric-label">Session Cost</div>
+            <div class="mcp-footer">
+              <span style="color: var(--accent-emerald);">Connected (1.2ms)</span>
+              <span style="color: var(--text-dim);">8 tools registered</span>
+            </div>
+          </div>
+
+          <div class="mcp-card">
+            <div class="mcp-header">
+              <span class="mcp-name">terminal-pty.mcp</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked onchange="toggleMcp('terminal-pty', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="mcp-tools-list">
+              <span class="mcp-tool-tag">spawn_pty</span>
+              <span class="mcp-tool-tag">write_pty</span>
+              <span class="mcp-tool-tag">resize_pty</span>
+              <span class="mcp-tool-tag">kill_pty</span>
+              <span class="mcp-tool-tag">stream_output</span>
+              <span class="mcp-tool-tag">exec_inline</span>
+            </div>
+            <div class="mcp-footer">
+              <span style="color: var(--accent-emerald);">Connected (0.8ms)</span>
+              <span style="color: var(--text-dim);">6 tools registered</span>
+            </div>
+          </div>
+
+          <div class="mcp-card">
+            <div class="mcp-header">
+              <span class="mcp-name">vector-memory.mcp</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked onchange="toggleMcp('vector-memory', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="mcp-tools-list">
+              <span class="mcp-tool-tag">query_vectors</span>
+              <span class="mcp-tool-tag">upsert_embedding</span>
+              <span class="mcp-tool-tag">cluster_inspect</span>
+              <span class="mcp-tool-tag">purge_vectors</span>
+            </div>
+            <div class="mcp-footer">
+              <span style="color: var(--accent-emerald);">Connected (2.1ms)</span>
+              <span style="color: var(--text-dim);">4 tools registered</span>
+            </div>
+          </div>
+
+          <div class="mcp-card">
+            <div class="mcp-header">
+              <span class="mcp-name">sqlite-db.mcp</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked onchange="toggleMcp('sqlite-db', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="mcp-tools-list">
+              <span class="mcp-tool-tag">run_query</span>
+              <span class="mcp-tool-tag">execute_batch</span>
+              <span class="mcp-tool-tag">schema_inspect</span>
+              <span class="mcp-tool-tag">backup_db</span>
+              <span class="mcp-tool-tag">vacuum</span>
+            </div>
+            <div class="mcp-footer">
+              <span style="color: var(--accent-emerald);">Connected (1.4ms)</span>
+              <span style="color: var(--text-dim);">5 tools registered</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Connected MCP Servers Section -->
-      <div class="view-header" style="margin-top: 10px;">
-        <div class="view-title" style="font-size: 15px;">Connected MCP Servers (5)</div>
-      </div>
+      <!-- 3. Execution Traces View -->
+      <section class="view-panel" id="view-traces">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Execution Trace Waterfall</h1>
+            <p class="view-subtitle">Inspect tool payloads, streaming events, and IPC call duration timelines</p>
+          </div>
+          <div class="view-actions">
+            <button class="action-btn" id="btn-clear-traces">Clear Traces</button>
+          </div>
+        </div>
 
-      <div class="mcp-grid">
-        <div class="mcp-card">
-          <div class="mcp-header">
-            <span class="mcp-name">fs-bridge.mcp</span>
-            <span class="mcp-tools-pill">8 Tools</span>
+        <div class="trace-container">
+          <div class="trace-waterfall" id="trace-list">
+            <div class="trace-item selected" onclick="selectTrace(0)">
+              <span class="trace-time">11:32:04</span>
+              <div class="trace-content">
+                <div><span class="trace-tag">[MCP:DB]</span> inspect_database_table (com.elix.code)</div>
+                <div style="color: var(--text-dim);">Latency: 42ms · Status: SUCCESS</div>
+              </div>
+            </div>
+
+            <div class="trace-item" onclick="selectTrace(1)">
+              <span class="trace-time">11:32:01</span>
+              <div class="trace-content">
+                <div><span class="trace-tag" style="color: var(--primary-cyan);">[SYS:EXEC]</span> sys_exec_code (powershell stream)</div>
+                <div style="color: var(--text-dim);">Duration: 128ms · Chunks: 4 streamed</div>
+              </div>
+            </div>
+
+            <div class="trace-item" onclick="selectTrace(2)">
+              <span class="trace-time">11:31:58</span>
+              <div class="trace-content">
+                <div><span class="trace-tag">[MCP:FS]</span> read_file (/src/schema.ts)</div>
+                <div style="color: var(--text-dim);">Latency: 3ms · Status: SUCCESS</div>
+              </div>
+            </div>
+
+            <div class="trace-item" onclick="selectTrace(3)">
+              <span class="trace-time">11:31:50</span>
+              <div class="trace-content">
+                <div><span class="trace-tag" style="color: var(--accent-emerald);">[VEC:MEM]</span> query_vectors ('AST transformer pattern')</div>
+                <div style="color: var(--text-dim);">Latency: 14ms · Similarity: 0.94</div>
+              </div>
+            </div>
           </div>
-          <div style="font-size: 11px; color: var(--text-dim);">Status: <span style="color: var(--accent-emerald);">Connected (1.2ms)</span></div>
-        </div>
-        <div class="mcp-card">
-          <div class="mcp-header">
-            <span class="mcp-name">terminal-pty.mcp</span>
-            <span class="mcp-tools-pill">6 Tools</span>
+
+          <div class="trace-inspector">
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-main);">Trace Payload & I/O</span>
+            <div class="inspector-code" id="trace-inspector-content">{
+  "invocationId": "inv-992148",
+  "appId": "com.elix.code",
+  "capability": "inspect_database_table",
+  "params": {
+    "tableName": "sessions",
+    "limit": 50,
+    "includeIndexes": true
+  },
+  "result": {
+    "status": "ok",
+    "columns": ["id", "user_id", "token_hash", "created_at"],
+    "rowCount": 1420,
+    "executionTimeMs": 42
+  }
+}</div>
           </div>
-          <div style="font-size: 11px; color: var(--text-dim);">Status: <span style="color: var(--accent-emerald);">Connected (0.8ms)</span></div>
         </div>
-        <div class="mcp-card">
-          <div class="mcp-header">
-            <span class="mcp-name">vector-memory.mcp</span>
-            <span class="mcp-tools-pill">4 Tools</span>
+      </section>
+
+      <!-- 4. Vector Memory View -->
+      <section class="view-panel" id="view-memory">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Vector Memory Bank</h1>
+            <p class="view-subtitle">High-dimensional semantic cache, embedding clusters, and cosine similarity query</p>
           </div>
-          <div style="font-size: 11px; color: var(--text-dim);">Status: <span style="color: var(--accent-emerald);">Connected (2.1ms)</span></div>
         </div>
-        <div class="mcp-card">
-          <div class="mcp-header">
-            <span class="mcp-name">sqlite-db.mcp</span>
-            <span class="mcp-tools-pill">5 Tools</span>
+
+        <div class="search-box-wrap">
+          <input type="text" class="search-input" id="vector-search-input" placeholder="Enter query to test semantic memory retrieval (e.g., 'IPC bridge architecture')..." value="IPC streaming architecture" />
+          <button class="action-btn primary" id="btn-search-vectors" onclick="runVectorSearch()">Search Bank</button>
+        </div>
+
+        <div class="memory-box">
+          <div class="vector-results" id="vector-results-list">
+            <div class="vector-card">
+              <div style="display:flex; align-items:center;">
+                <span style="font-weight:600; font-size:13px; color:var(--primary-cyan);">vec-101: App bridge streaming pipeline</span>
+                <span class="similarity-badge">0.94 Similarity</span>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted);">
+                WebSocket chunk multiplexer for stdout/stderr streaming with unbuffered backpressure.
+              </div>
+              <div style="display:flex; gap:6px; margin-top:4px;">
+                <span class="mcp-tool-tag">#ipc-bridge</span>
+                <span class="mcp-tool-tag">#streaming</span>
+                <span class="mcp-tool-tag">#daemon</span>
+              </div>
+            </div>
+
+            <div class="vector-card">
+              <div style="display:flex; align-items:center;">
+                <span style="font-weight:600; font-size:13px; color:var(--primary-cyan);">vec-102: Liquid Metal window frame styling</span>
+                <span class="similarity-badge">0.88 Similarity</span>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted);">
+                Frameless BrowserWindow integration with draggable titlebar and brushed metallic capsule buttons.
+              </div>
+              <div style="display:flex; gap:6px; margin-top:4px;">
+                <span class="mcp-tool-tag">#ui</span>
+                <span class="mcp-tool-tag">#electron</span>
+              </div>
+            </div>
           </div>
-          <div style="font-size: 11px; color: var(--text-dim);">Status: <span style="color: var(--accent-emerald);">Connected (1.4ms)</span></div>
+
+          <div class="stat-card" style="justify-content:center; align-items:center; text-align:center; padding: 30px;">
+            <div style="font-size: 32px; margin-bottom: 10px;">🧠</div>
+            <div style="font-size: 15px; font-weight: 600;">Vector Bank Status: Nominal</div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">14,820 Vectors · 1536-dim · HNSW Index</div>
+            <div style="margin-top: 16px; font-size: 11px; color: var(--accent-emerald); font-family: var(--font-mono);">
+              Cosine metric latency: 2.1ms (Cache Hit: 96.4%)
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <!-- 5. Fleet & Token Cost View -->
+      <section class="view-panel" id="view-fleet">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Fleet Telemetry & Token Cost</h1>
+            <p class="view-subtitle">Live model consumption breakdown, cost caps, and exportable ledger</p>
+          </div>
+          <div class="view-actions">
+            <button class="action-btn" onclick="exportBilling()">Export Billing Summary</button>
+          </div>
+        </div>
+
+        <div class="fleet-grid">
+          <div class="fleet-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 600; font-size: 14px;">Claude 3.5 Sonnet</span>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--primary-cyan);">$0.255</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim);">85,000 tokens (59.6% usage)</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: 59.6%;"></div>
+            </div>
+          </div>
+
+          <div class="fleet-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 600; font-size: 14px;">OpenAI GPT-4o</span>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--primary-cyan);">$0.098</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim);">32,500 tokens (22.8% usage)</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: 22.8%;"></div>
+            </div>
+          </div>
+
+          <div class="fleet-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 600; font-size: 14px;">Gemini 1.5 Pro</span>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--primary-cyan);">$0.075</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim);">25,000 tokens (17.5% usage)</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: 17.5%;"></div>
+            </div>
+          </div>
+
+          <div class="fleet-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 600; font-size: 14px;">Local DeepSeek V3</span>
+              <span style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-emerald);">$0.000</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-dim);">120,000 tokens (Bare-metal local)</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: 100%; background: var(--accent-emerald);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card" style="margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="stat-label">Monthly Budget Guardrail ($10.00 Max)</span>
+            <span style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-emerald);">$0.428 spent (4.28%)</span>
+          </div>
+          <div class="progress-bar-bg" style="height: 10px;">
+            <div class="progress-bar-fill" style="width: 4.28%;"></div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script>
     let ws = null;
 
-    function switchTab(tab) {
-      document.querySelectorAll('.rail-btn').forEach(btn => btn.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+    // Frameless Window Control Setup
+    function setupWindowControls() {
+      let ipcRenderer = null;
+      try {
+        if (typeof window !== 'undefined' && window.require) {
+          ipcRenderer = window.require('electron').ipcRenderer;
+        } else if (window.electron && window.electron.ipcRenderer) {
+          ipcRenderer = window.electron.ipcRenderer;
+        }
+      } catch (e) {}
+
+      const sendWinAction = (channel) => {
+        if (ipcRenderer) {
+          ipcRenderer.send(channel);
+        } else if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'window_action', action: channel }));
+        } else {
+          console.log('[Window] Action invoked:', channel);
+        }
+      };
+
+      document.getElementById('win-min')?.addEventListener('click', () => sendWinAction('elix:window:minimize'));
+      document.getElementById('win-max')?.addEventListener('click', () => sendWinAction('elix:window:maximize'));
+      document.getElementById('win-close')?.addEventListener('click', () => sendWinAction('elix:window:close'));
     }
 
-    function spawnNewAgent() {
-      alert('Spawn Agent Run: Invoking com.elix.center / spawn_agent_run capability.');
+    // Dynamic Multi-View Navigation Tab Switching
+    function setupTabRouting() {
+      const navItems = document.querySelectorAll('.nav-item');
+      const viewPanels = document.querySelectorAll('.view-panel');
+
+      navItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const targetView = item.getAttribute('data-view');
+          if (!targetView) return;
+
+          navItems.forEach(n => n.classList.remove('active'));
+          item.classList.add('active');
+
+          viewPanels.forEach(panel => {
+            if (panel.id === 'view-' + targetView) {
+              panel.classList.add('active');
+            } else {
+              panel.classList.remove('active');
+            }
+          });
+        });
+      });
     }
 
-    // WebSocket IPC Bus
+    // Trace details inspector data
+    const traceData = [
+      {
+        invocationId: "inv-992148",
+        appId: "com.elix.code",
+        capability: "inspect_database_table",
+        params: { tableName: "sessions", limit: 50, includeIndexes: true },
+        result: { status: "ok", columns: ["id", "user_id", "token_hash", "created_at"], rowCount: 1420, executionTimeMs: 42 }
+      },
+      {
+        invocationId: "inv-992147",
+        appId: "com.elix.app-bridge",
+        capability: "sys_exec_code",
+        params: { runtime: "powershell", command: "Get-Process | Select-Object -First 5" },
+        result: { exitCode: 0, durationMs: 128, chunksStreamed: 4 }
+      },
+      {
+        invocationId: "inv-992146",
+        appId: "com.elix.files",
+        capability: "sys_fs_read",
+        params: { filePath: "/src/schema.ts" },
+        result: { status: "ok", bytesRead: 3410, executionTimeMs: 3 }
+      },
+      {
+        invocationId: "inv-992145",
+        appId: "com.elix.center",
+        capability: "inspect_memory_vectors",
+        params: { query: "AST transformer pattern" },
+        result: { status: "ok", matchCount: 2, topSimilarity: 0.94 }
+      }
+    ];
+
+    function selectTrace(index) {
+      document.querySelectorAll('.trace-item').forEach((it, i) => {
+        it.classList.toggle('selected', i === index);
+      });
+      const target = traceData[index] || traceData[0];
+      const inspector = document.getElementById('trace-inspector-content');
+      if (inspector) {
+        inspector.textContent = JSON.stringify(target, null, 2);
+      }
+    }
+
+    function toggleMcp(serverId, enabled) {
+      console.log(`[MCP] Toggling server ${serverId}: ${enabled}`);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'tool_call',
+          appId: 'com.elix.center',
+          capability: 'toggle_mcp_server',
+          params: { serverId, action: enabled ? 'enable' : 'disable' }
+        }));
+      }
+    }
+
+    function runVectorSearch() {
+      const query = document.getElementById('vector-search-input')?.value || 'search';
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'tool_call',
+          appId: 'com.elix.center',
+          capability: 'inspect_memory_vectors',
+          params: { query }
+        }));
+      }
+    }
+
+    function exportBilling() {
+      alert('Exporting Billing Summary: Generated telemetry JSON invoice.');
+    }
+
+    // WebSocket IPC Daemon Client
     function initWebSocket() {
       try {
         ws = new WebSocket('ws://127.0.0.1:7391');
@@ -733,8 +1383,8 @@
           case 'inspect_memory_vectors':
             result.query = params?.query;
             result.vectors = [
-              { id: 'vec-101', text: 'App bridge tool registration pipeline', similarity: 0.94 },
-              { id: 'vec-102', text: 'Liquid Chrome window frame renderer', similarity: 0.88 }
+              { id: 'vec-101', text: 'App bridge streaming pipeline', similarity: 0.94 },
+              { id: 'vec-102', text: 'Liquid Metal window frame styling', similarity: 0.88 }
             ];
             break;
 
@@ -742,7 +1392,7 @@
             result.window = params?.timeWindow || '24h';
             result.totalTokens = 142500;
             result.totalCostUsd = 0.428;
-            result.providers = { claude: 85000, openai: 32500, gemini: 25000 };
+            result.providers = { claude: 85000, openai: 32500, gemini: 25000, deepseek_local: 120000 };
             break;
         }
 
@@ -757,15 +1407,9 @@
       }
     }
 
-    function sendNativeWindowCommand(channel) {
-      if (window.electron && window.electron.ipcRenderer) {
-        window.electron.ipcRenderer.send(channel);
-      } else if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'window_action', action: channel }));
-      }
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
+      setupWindowControls();
+      setupTabRouting();
       initWebSocket();
     });
   </script>

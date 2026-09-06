@@ -142,17 +142,20 @@ export class NativeWindowHost implements WindowHost {
   }
 
   private resolveElectronBinary(): string | undefined {
-    const names = process.platform === 'win32' ? ['electron.exe'] : ['electron'];
+    const names = process.platform === 'win32' ? ['electron.exe', 'electron.cmd'] : ['electron'];
     const roots = [
       process.cwd(),
       path.resolve(__dirname, '..'),
       path.resolve(__dirname, '../..'),
       path.resolve(__dirname, '../../..'),
+      path.resolve(__dirname, '../../../../..'),
     ];
     for (const root of roots) {
       for (const name of names) {
-        const candidate = path.join(root, 'node_modules', 'electron', 'dist', name);
-        if (fs.existsSync(candidate)) return candidate;
+        const candidateDist = path.join(root, 'node_modules', 'electron', 'dist', name);
+        if (fs.existsSync(candidateDist)) return candidateDist;
+        const candidateBin = path.join(root, 'node_modules', '.bin', name);
+        if (fs.existsSync(candidateBin)) return candidateBin;
       }
     }
     return undefined;
