@@ -142,6 +142,17 @@ export class NativeWindowHost implements WindowHost {
   }
 
   private resolveElectronBinary(): string {
+    const electronCandidates = [
+      path.resolve(process.cwd(), 'node_modules', 'electron', 'dist', 'electron.exe'),
+      path.resolve(process.cwd(), '..', '..', '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+      path.resolve(__dirname, '..', '..', '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+      path.resolve(__dirname, '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+      path.resolve(__dirname, '../..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+    ];
+
+    const found = electronCandidates.find((p) => fs.existsSync(p));
+    if (found) return found;
+
     // 1. Try to resolve via electron module export if available
     try {
       const electronMod = require('electron');
@@ -171,7 +182,7 @@ export class NativeWindowHost implements WindowHost {
         if (fs.existsSync(candidateBin)) return candidateBin;
       }
     }
-    return 'npx electron';
+    return 'electron';
   }
 
   private spawnNativeDesktopWindow(
@@ -540,45 +551,27 @@ export function broadcastEvent(eventData: Record<string, any>): void {
  * Standalone helper to launch a native Electron window
  */
 export function launchNativeWindow(targetUrl: string, width = 1180, height = 780, appId = ''): void {
-  let electronExe: string;
-  try {
-    const electronMod = require('electron');
-    electronExe = typeof electronMod === 'string' ? electronMod : (electronMod as any).default || electronMod;
-  } catch {
-    electronExe = 'electron';
-  }
-
-  // Resolve native-shell.cjs wherever it is placed
-  const candidatePaths = [
-    path.resolve(__dirname, 'native-shell.cjs'),
-    path.resolve(__dirname, 'src', 'native-shell.cjs'),
-    path.resolve(__dirname, '..', 'native-shell.cjs'),
-    path.resolve(process.cwd(), 'src', 'native-shell.cjs'),
-    path.resolve(process.cwd(), 'native-shell.cjs'),
+  // Resolve electron executable location
+  const electronCandidates = [
+    path.resolve(process.cwd(), 'node_modules', 'electron', 'dist', 'electron.exe'),
+    path.resolve(process.cwd(), '..', '..', '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+    path.resolve(__dirname, '..', '..', '..', 'node_modules', 'electron', 'dist', 'electron.exe'),
+    'electron'
   ];
 
-  const shellScript = candidatePaths.find((p) => fs.existsSync(p));
-  if (!shellScript) {
-    throw new Error(`[ELIX NativeWindowHost] native-shell.cjs not found in: ${candidatePaths.join(', ')}`);
-  }
+  const electronExe = electronCandidates.find(p => p === 'electron' || fs.existsSync(p)) || 'electron';
+  const shellScript = path.resolve(__dirname, 'native-shell.cjs');
 
-  const args = [
+  const child = child_process.spawn(electronExe, [
     shellScript,
     targetUrl,
     String(width),
     String(height),
-    String(appId),
-  ];
-
-  // Spawn independent background GUI process
-  const child = child_process.spawn(electronExe, args, {
+    String(appId)
+  ], {
     detached: true,
     stdio: 'ignore',
-    windowsHide: false,
-  });
-
-  child.on('error', (err) => {
-    console.error('[ELIX NativeWindowHost] Failed to spawn Electron:', err.message);
+    windowsHide: false
   });
 
   child.unref();
