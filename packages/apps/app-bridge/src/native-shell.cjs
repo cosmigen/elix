@@ -4,6 +4,11 @@ const os = require('os');
 const fs = require('fs');
 const Module = require('module');
 
+// Log all uncaught errors to console
+process.on('uncaughtException', (err) => {
+  console.error('[native-shell] Uncaught exception:', err);
+});
+
 // Register window action IPC handlers
 ipcMain.on('window-minimize', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
@@ -198,12 +203,15 @@ function connectHostBridge() {
 }
 
 app.whenReady().then(() => {
+  console.log(`[native-shell] Launching ${appId} (${width}x${height})`);
+
   const win = new BrowserWindow({
     width,
     height,
     minWidth,
     minHeight,
     frame: false,
+    show: true,
     transparent: false,
     backgroundColor: '#0b0f19',
     title,
@@ -213,22 +221,32 @@ app.whenReady().then(() => {
 
   win.setMenuBarVisibility(false);
 
-  // Clean duplicate file:/// protocol prefixes if present
-  let safeUrl = rawUrl;
-  if (!safeUrl.startsWith('http://') && !safeUrl.startsWith('https://') && !safeUrl.startsWith('about:')) {
-    const cleanPath = safeUrl.replace(/^file:\/\/\/?/i, '').replace(/\\/g, '/');
-    safeUrl = `file:///${cleanPath}`;
+  // Handle URL with spaces or local file paths properly
+  if (rawUrl.startsWith('file://')) {
+    const cleanPath = decodeURI(rawUrl.replace('file:///', '').replace('file://', ''));
+    if (fs.existsSync(cleanPath)) {
+      win.loadFile(cleanPath).catch(err => {
+        console.error('[native-shell] loadFile failed, trying loadURL:', err);
+        win.loadURL(encodeURI(rawUrl)).catch(() => {});
+      });
+    } else {
+      win.loadURL(encodeURI(rawUrl)).catch(() => {});
+    }
+  } else if (rawUrl) {
+    win.loadURL(rawUrl).catch(() => {});
   }
 
-  win.loadURL(safeUrl).catch((err) => {
-    console.error('Failed to load URL:', safeUrl, err);
+  win.webContents.on('did-fail-load', (e, code, desc) => {
+    console.error(`[native-shell] Failed to load: ${code} - ${desc}`);
   });
 
   connectHostBridge();
 
   win.on('closed', () => {
     mainWindow = null;
-    app.quit();
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
   });
 });
 
