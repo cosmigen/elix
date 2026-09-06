@@ -130,7 +130,7 @@ export async function runTui(): Promise<void> {
   // 3. Direct CLI Flag: --launch <appId> / -l <appId>
   const launchIdx = process.argv.findIndex((a) => a === '--launch' || a === '-l');
   if (launchIdx !== -1 && process.argv[launchIdx + 1]) {
-    const targetAppId = process.argv[launchIdx + 1];
+    const targetAppId = process.argv[launchIdx + 1]!;
     let apps = appManager.list('all');
     if (!apps.some((a) => a.appId === targetAppId)) {
       await appManager.rebuildDemoApps(path.join(PACKAGE_ROOT, 'demo-apps'));
@@ -141,9 +141,34 @@ export async function runTui(): Promise<void> {
       const res = await openAppTool.execute({ appId: targetAppId });
       p.log.success(`Window launched successfully! [Window ID: ${res.windowId}]`);
       p.log.info(`Geometry: ${res.geometry.width}x${res.geometry.height} | URL: ${res.url}`);
-      p.outro(`Direct launch for '${targetAppId}' finished with exit code 0.`);
-      p.closeReadlineInterface();
-      process.exit(0);
+
+      const isCiOrHeadless = process.env.CI === '1' || process.env.HEADLESS === 'true' || process.env.ELIX_HEADLESS === 'true';
+      if (isCiOrHeadless) {
+        p.outro(`Direct launch for '${targetAppId}' finished with exit code 0.`);
+        p.closeReadlineInterface();
+        process.exit(0);
+      }
+
+      p.log.info(`⚡ LocalIpcServer active on ws://127.0.0.1:7391. Keeping bridge alive...`);
+      p.log.info(`Press Ctrl+C to terminate session.`);
+
+      const cleanup = async () => {
+        p.log.info('Closing window and terminating IPC session...');
+        await appManager.close(targetAppId).catch(() => {});
+        if (globalThis.__ELIX_WSS__) {
+          try {
+            await globalThis.__ELIX_WSS__.close();
+          } catch {}
+        }
+        p.closeReadlineInterface();
+        process.exit(0);
+      };
+
+      process.on('SIGINT', cleanup);
+      process.on('SIGTERM', cleanup);
+
+      // Keep process event loop alive indefinitely until Ctrl+C
+      await new Promise(() => {});
     } catch (err: any) {
       p.log.error(`Direct launch failed: ${err.message}`);
       p.closeReadlineInterface();
