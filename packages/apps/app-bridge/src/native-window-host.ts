@@ -180,7 +180,7 @@ export class NativeWindowHost implements WindowHost {
     targetUrl: string,
     width: number,
     height: number,
-    title: string = 'ELIX Application',
+    _title: string = 'ELIX Application',
     windowOverrides?: Partial<ElixAppWindowConfig> & { detached?: boolean }
   ): void {
     // Enforce headless mocking during automated tests or when HEADLESS is set
@@ -199,8 +199,8 @@ export class NativeWindowHost implements WindowHost {
       path.resolve(__dirname, 'native-shell.cjs'),
       path.resolve(__dirname, '../native-shell.cjs'),
     ];
-    const shellScript = candidates.find((p) => fs.existsSync(p));
-    if (!shellScript) {
+    const shellScriptPath = candidates.find((p) => fs.existsSync(p));
+    if (!shellScriptPath) {
       throw new Error(
         `[ELIX NativeWindowHost] native-shell.cjs script was not found. Cannot launch window for '${appId}'. Browser fallbacks are permanently disabled.`
       );
@@ -213,37 +213,19 @@ export class NativeWindowHost implements WindowHost {
       safeUrl = `file:///${cleanPath}`;
     }
 
-    const minWidth = windowOverrides?.minWidth || 400;
-    const minHeight = windowOverrides?.minHeight || 300;
     const isDetached = windowOverrides?.detached ?? true;
 
-    // 1. Resolve electron executable safely
-    const electronBinary: string = this.resolveElectronBinary();
+    // 1. Resolve electron binary
+    const electronExe = this.resolveElectronBinary();
+    const shellScript = path.resolve(shellScriptPath);
 
-    // 2. Ensure every single argument in the array is strictly a string
-    const electronArgs: string[] = [
-      path.resolve(shellScript),
-      String(safeUrl),
-      String(width || 1180),
-      String(height || 780),
-      String(appId),
-      `--url=${safeUrl}`,
-      `--width=${String(width || 1180)}`,
-      `--height=${String(height || 780)}`,
-      `--minWidth=${String(minWidth)}`,
-      `--minHeight=${String(minHeight)}`,
-      `--title=${String(title || 'ELIX App')}`,
-      `--appId=${String(appId)}`,
-      `--nodeIntegration=${String(NATIVE_WINDOW_WEB_PREFERENCES.nodeIntegration)}`,
-      `--contextIsolation=${String(NATIVE_WINDOW_WEB_PREFERENCES.contextIsolation)}`,
-      `--webSecurity=${String(NATIVE_WINDOW_WEB_PREFERENCES.webSecurity)}`,
-    ];
+    // 2. Format a single command line string with quoted arguments to avoid DEP0190 and EINVAL
+    const fullCommand = `"${electronExe}" "${shellScript}" "${safeUrl}" "${width || 1180}" "${height || 780}" "${appId || ''}"`;
 
-    // 3. Spawn with shell: true to prevent Windows EINVAL
+    // 3. Spawn detached process without passing an args array
     let child: child_process.ChildProcess | undefined;
     try {
-      const execTarget = electronBinary.startsWith('"') || electronBinary.includes('npx') ? electronBinary : `"${electronBinary}"`;
-      child = child_process.spawn(execTarget, electronArgs, {
+      child = child_process.spawn(fullCommand, {
         shell: true,
         detached: isDetached,
         stdio: 'ignore',

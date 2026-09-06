@@ -78,7 +78,7 @@ const height = parseInt(getArg('height', positionalNonFlag[2] || '780'), 10) || 
 const minWidth = parseInt(getArg('minWidth', '400'), 10) || 400;
 const minHeight = parseInt(getArg('minHeight', '300'), 10) || 300;
 const title = getArg('title', 'ELIX Application');
-const appId = getArg('appId', 'com.elix.app');
+const appId = getArg('appId', positionalNonFlag[3] || 'com.elix.app');
 
 const WEB_PREFERENCES = {
   nodeIntegration: true,
