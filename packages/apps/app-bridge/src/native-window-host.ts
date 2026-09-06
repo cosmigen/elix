@@ -193,16 +193,19 @@ export class NativeWindowHost implements WindowHost {
       return;
     }
 
-    const candidates = [
-      path.resolve(process.cwd(), 'native-shell.cjs'),
-      path.resolve(process.cwd(), 'src/native-shell.cjs'),
+    // Resolve native-shell.cjs wherever it is placed
+    const candidatePaths = [
       path.resolve(__dirname, 'native-shell.cjs'),
-      path.resolve(__dirname, '../native-shell.cjs'),
+      path.resolve(__dirname, 'src', 'native-shell.cjs'),
+      path.resolve(__dirname, '..', 'native-shell.cjs'),
+      path.resolve(process.cwd(), 'src', 'native-shell.cjs'),
+      path.resolve(process.cwd(), 'native-shell.cjs'),
     ];
-    const shellScriptPath = candidates.find((p) => fs.existsSync(p));
-    if (!shellScriptPath) {
+
+    const shellScript = candidatePaths.find((p) => fs.existsSync(p));
+    if (!shellScript) {
       throw new Error(
-        `[ELIX NativeWindowHost] native-shell.cjs script was not found. Cannot launch window for '${appId}'. Browser fallbacks are permanently disabled.`
+        `[ELIX NativeWindowHost] native-shell.cjs not found in: ${candidatePaths.join(', ')}`
       );
     }
 
@@ -217,7 +220,6 @@ export class NativeWindowHost implements WindowHost {
 
     // 1. Resolve electron binary
     const electronExe = this.resolveElectronBinary();
-    const shellScript = path.resolve(shellScriptPath);
 
     // 2. Prepare argument array
     const args = [
@@ -228,29 +230,21 @@ export class NativeWindowHost implements WindowHost {
       String(appId),
     ];
 
-    // 3. Spawn detached process using execFile directly without shell
+    // 3. Spawn independent background GUI process
     let child: child_process.ChildProcess | undefined;
     try {
-      child = (child_process.execFile as any)(
-        electronExe,
-        args,
-        {
-          detached: isDetached,
-          windowsHide: false,
-        },
-        (err: Error | null) => {
-          if (err) {
-            console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
-          }
-        }
-      );
+      child = child_process.spawn(electronExe, args, {
+        detached: isDetached,
+        stdio: 'ignore',
+        windowsHide: false,
+      });
 
-      child?.on('error', (err) => {
-        console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
+      child.on('error', (err) => {
+        console.error('[ELIX NativeWindowHost] Failed to spawn Electron:', err.message);
       });
     } catch (err: any) {
       throw new Error(
-        `[ELIX NativeWindowHost] Failed to start Electron process for '${appId}': ${err.message}. Microsoft Edge and browser fallbacks have been permanently disabled.`
+        `[ELIX NativeWindowHost] Failed to spawn Electron process for '${appId}': ${err.message}. Microsoft Edge and browser fallbacks have been permanently disabled.`
       );
     }
 
@@ -543,7 +537,7 @@ export function broadcastEvent(eventData: Record<string, any>): void {
 }
 
 /**
- * Standalone helper to launch a native Electron window using execFile directly
+ * Standalone helper to launch a native Electron window
  */
 export function launchNativeWindow(targetUrl: string, width = 1180, height = 780, appId = ''): void {
   let electronExe: string;
@@ -554,13 +548,19 @@ export function launchNativeWindow(targetUrl: string, width = 1180, height = 780
     electronExe = 'electron';
   }
 
-  const candidates = [
-    path.resolve(process.cwd(), 'native-shell.cjs'),
-    path.resolve(process.cwd(), 'src/native-shell.cjs'),
+  // Resolve native-shell.cjs wherever it is placed
+  const candidatePaths = [
     path.resolve(__dirname, 'native-shell.cjs'),
-    path.resolve(__dirname, '../native-shell.cjs'),
+    path.resolve(__dirname, 'src', 'native-shell.cjs'),
+    path.resolve(__dirname, '..', 'native-shell.cjs'),
+    path.resolve(process.cwd(), 'src', 'native-shell.cjs'),
+    path.resolve(process.cwd(), 'native-shell.cjs'),
   ];
-  const shellScript = candidates.find((p) => fs.existsSync(p)) || path.resolve(__dirname, 'native-shell.cjs');
+
+  const shellScript = candidatePaths.find((p) => fs.existsSync(p));
+  if (!shellScript) {
+    throw new Error(`[ELIX NativeWindowHost] native-shell.cjs not found in: ${candidatePaths.join(', ')}`);
+  }
 
   const args = [
     shellScript,
@@ -570,24 +570,17 @@ export function launchNativeWindow(targetUrl: string, width = 1180, height = 780
     String(appId),
   ];
 
-  const child = (child_process.execFile as any)(
-    electronExe,
-    args,
-    {
-      detached: true,
-      windowsHide: false,
-    },
-    (err: Error | null) => {
-      if (err) {
-        console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
-      }
-    }
-  );
-
-  child?.on('error', (err: any) => {
-    console.error('[ELIX NativeWindowHost] Failed to start Electron:', err.message);
+  // Spawn independent background GUI process
+  const child = child_process.spawn(electronExe, args, {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: false,
   });
 
-  child?.unref();
+  child.on('error', (err) => {
+    console.error('[ELIX NativeWindowHost] Failed to spawn Electron:', err.message);
+  });
+
+  child.unref();
 }
 
