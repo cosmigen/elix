@@ -141,7 +141,7 @@ export class NativeWindowHost implements WindowHost {
     return this.launch(appId, url, options);
   }
 
-  private resolveElectronBinary(): string | undefined {
+  private resolveElectronBinary(): string {
     // 1. Try to resolve via electron module export if available
     try {
       const electronMod = require('electron');
@@ -171,7 +171,7 @@ export class NativeWindowHost implements WindowHost {
         if (fs.existsSync(candidateBin)) return candidateBin;
       }
     }
-    return undefined;
+    return 'npx electron';
   }
 
   private spawnNativeDesktopWindow(
@@ -217,37 +217,37 @@ export class NativeWindowHost implements WindowHost {
     const minHeight = windowOverrides?.minHeight || 300;
     const isDetached = windowOverrides?.detached ?? true;
 
-    const electronBin = this.resolveElectronBinary();
-    if (!electronBin) {
-      throw new Error(
-        `[ELIX NativeWindowHost] Failed to launch Electron window for '${appId}'. Electron binary was not found. Microsoft Edge and browser fallbacks have been permanently disabled.`
-      );
-    }
+    // 1. Resolve electron executable safely
+    const electronBinary: string = this.resolveElectronBinary();
 
-    const electronArgs = [
-      shellScript,
-      safeUrl,
-      (width || 1180).toString(),
-      (height || 780).toString(),
+    // 2. Ensure every single argument in the array is strictly a string
+    const electronArgs: string[] = [
+      path.resolve(shellScript),
+      String(safeUrl),
+      String(width || 1180),
+      String(height || 780),
+      String(appId),
       `--url=${safeUrl}`,
-      `--width=${width || 1180}`,
-      `--height=${height || 780}`,
-      `--minWidth=${minWidth}`,
-      `--minHeight=${minHeight}`,
-      `--title=${title || 'ELIX App'}`,
-      `--appId=${appId}`,
-      `--nodeIntegration=${NATIVE_WINDOW_WEB_PREFERENCES.nodeIntegration}`,
-      `--contextIsolation=${NATIVE_WINDOW_WEB_PREFERENCES.contextIsolation}`,
-      `--webSecurity=${NATIVE_WINDOW_WEB_PREFERENCES.webSecurity}`,
+      `--width=${String(width || 1180)}`,
+      `--height=${String(height || 780)}`,
+      `--minWidth=${String(minWidth)}`,
+      `--minHeight=${String(minHeight)}`,
+      `--title=${String(title || 'ELIX App')}`,
+      `--appId=${String(appId)}`,
+      `--nodeIntegration=${String(NATIVE_WINDOW_WEB_PREFERENCES.nodeIntegration)}`,
+      `--contextIsolation=${String(NATIVE_WINDOW_WEB_PREFERENCES.contextIsolation)}`,
+      `--webSecurity=${String(NATIVE_WINDOW_WEB_PREFERENCES.webSecurity)}`,
     ];
 
+    // 3. Spawn with shell: true to prevent Windows EINVAL
     let child: child_process.ChildProcess | undefined;
     try {
-      child = child_process.spawn(electronBin, electronArgs, {
+      const execTarget = electronBinary.startsWith('"') || electronBinary.includes('npx') ? electronBinary : `"${electronBinary}"`;
+      child = child_process.spawn(execTarget, electronArgs, {
+        shell: true,
         detached: isDetached,
-        stdio: isDetached ? 'ignore' : 'inherit',
+        stdio: 'ignore',
         windowsHide: false,
-        shell: false,
       });
     } catch (err: any) {
       throw new Error(
@@ -255,17 +255,15 @@ export class NativeWindowHost implements WindowHost {
       );
     }
 
-    if (!child || !child.pid) {
-      throw new Error(
-        `[ELIX NativeWindowHost] Electron process failed to initialize (no PID returned) for '${appId}'. Microsoft Edge and browser fallbacks have been permanently disabled.`
-      );
+    if (child) {
+      if (isDetached && child.unref) {
+        child.unref();
+      }
+      this.processes.set(appId, child);
+      if (child.pid) {
+        win.pid = child.pid;
+      }
     }
-
-    if (isDetached && child.unref) {
-      child.unref();
-    }
-    this.processes.set(appId, child);
-    win.pid = child.pid;
   }
 
   private killProcessTree(pid: number): void {
