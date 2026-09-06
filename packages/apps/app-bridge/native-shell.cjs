@@ -5,6 +5,10 @@ const fs = require('fs');
 const Module = require('module');
 
 // Register window action IPC handlers
+ipcMain.on('window-minimize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  win?.minimize();
+});
 ipcMain.on('app-window-minimize', (event) => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
@@ -15,6 +19,14 @@ ipcMain.on('WINDOW_MINIMIZE', (event) => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
 
+ipcMain.on('window-maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
+  }
+});
 ipcMain.on('app-window-maximize', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
@@ -31,6 +43,10 @@ ipcMain.on('WINDOW_MAXIMIZE', (event) => {
   win.isMaximized() ? win.unmaximize() : win.maximize();
 });
 
+ipcMain.on('window-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  win?.close();
+});
 ipcMain.on('app-window-close', (event) => {
   BrowserWindow.fromWebContents(event.sender)?.destroy();
 });
@@ -55,8 +71,8 @@ const getArg = (name, fallback = '') => {
 };
 
 const rawUrl = getArg('url', 'about:blank');
-const width = parseInt(getArg('width', '680'), 10) || 680;
-const height = parseInt(getArg('height', '600'), 10) || 600;
+const width = parseInt(getArg('width', '1180'), 10) || 1180;
+const height = parseInt(getArg('height', '780'), 10) || 780;
 const minWidth = parseInt(getArg('minWidth', '400'), 10) || 400;
 const minHeight = parseInt(getArg('minHeight', '300'), 10) || 300;
 const title = getArg('title', 'ELIX Application');
@@ -141,15 +157,15 @@ function connectHostBridge() {
     } catch (e) {
       return;
     }
-    if (msg.action === 'CLOSE' || msg.type === 'WINDOW_CLOSE' || msg.type === 'elix:window:close') {
+    if (msg.action === 'CLOSE' || msg.action === 'window-close' || msg.type === 'WINDOW_CLOSE' || msg.type === 'elix:window:close') {
       destroyWindowAndQuit();
       return;
     }
-    if (msg.action === 'MINIMIZE' || msg.type === 'WINDOW_MINIMIZE' || msg.type === 'elix:window:minimize') {
+    if (msg.action === 'MINIMIZE' || msg.action === 'window-minimize' || msg.type === 'WINDOW_MINIMIZE' || msg.type === 'elix:window:minimize') {
       mainWindow?.minimize();
       return;
     }
-    if (msg.action === 'MAXIMIZE' || msg.type === 'WINDOW_MAXIMIZE' || msg.type === 'elix:window:maximize') {
+    if (msg.action === 'MAXIMIZE' || msg.action === 'window-maximize' || msg.type === 'WINDOW_MAXIMIZE' || msg.type === 'elix:window:maximize') {
       if (mainWindow) {
         mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
       }
@@ -186,9 +202,9 @@ app.whenReady().then(() => {
     minWidth,
     minHeight,
     frame: false,
-    titleBarStyle: 'hidden',
-    title,
+    transparent: false,
     backgroundColor: '#0b0f19',
+    title,
     webPreferences: WEB_PREFERENCES,
   });
   mainWindow = win;

@@ -444,6 +444,57 @@
       color: #ffffff;
     }
 
+      /* ELIX OS Universal Window Framing & Liquid Metal Capsule Controls */
+    .window-controls-capsule, .liquid-metal-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%), #141a29;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 14px rgba(0, 0, 0, 0.45);
+      border-radius: 9999px;
+      -webkit-app-region: no-drag;
+      z-index: 9999;
+    }
+
+    .window-controls-capsule button, .window-controls-capsule .control-btn,
+    .liquid-metal-capsule button, .liquid-metal-capsule .control-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
+    }
+
+    .window-controls-capsule button svg, .window-controls-capsule .control-btn svg,
+    .liquid-metal-capsule button svg, .liquid-metal-capsule .control-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      stroke-width: 1.6;
+      fill: none;
+    }
+
+    .window-controls-capsule button:hover, .window-controls-capsule .control-btn:hover,
+    .liquid-metal-capsule button:hover, .liquid-metal-capsule .control-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .window-controls-capsule button.btn-close:hover, .window-controls-capsule .control-btn.btn-close:hover,
+    .liquid-metal-capsule button.btn-close:hover, .liquid-metal-capsule .control-btn.btn-close:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
@@ -826,135 +877,75 @@
       renderProcessTable();
     });
   </script>
-
   <script>
-    // Universal Declarative Tab Router & Window Control Binding
-    /**
- * ELIX OS Universal App Runtime
- * Declarative Tab Routing & Frameless Window Controls for all ELIX OS native applications.
- */
-
-(function initElixAppRuntime() {
-  function setupUniversalTabRouting() {
-    const navButtons = document.querySelectorAll('[data-tab], [data-target], [data-view], .nav-item, .tab-btn, .tab-item, .sub-nav-btn, .rail-btn');
-    if (!navButtons.length) return;
-
-    navButtons.forEach(btn => {
-      if (btn.__elix_tab_bound) return;
-      btn.__elix_tab_bound = true;
-
-      btn.addEventListener('click', (e) => {
-        const targetId = btn.getAttribute('data-tab') || 
-                         btn.getAttribute('data-target') || 
-                         btn.getAttribute('data-view') || 
-                         btn.getAttribute('href')?.replace(/^#/, '');
-        if (!targetId) return;
-
-        // Deactivate siblings in the same navigation container
-        const container = btn.closest('nav, .sidebar, .tab-bar, .sub-nav, .activity-rail, .nav-tabs, .tabs') || btn.parentElement || document;
-        container.querySelectorAll('.nav-item, .tab-btn, .tab-item, .sub-nav-btn, .rail-btn, button, a').forEach(b => {
-          b.classList.remove('active');
-        });
-        btn.classList.add('active');
-
-        // Toggle target view panel
-        const parentViewScope = btn.closest('.app-container, .main-container, .center-workspace, .workspace, main, body') || document;
-        const views = parentViewScope.querySelectorAll('.view-panel, .tab-content, .panel-view, .view-section, section[id], div[id^="view-"], div[id^="tab-"]');
-        
-        let found = false;
-        views.forEach(view => {
-          const isTarget = view.id === targetId || 
-                           view.id === 'view-' + targetId || 
-                           view.id === 'tab-' + targetId ||
-                           view.getAttribute('data-panel') === targetId ||
-                           view.getAttribute('data-view') === targetId;
-          if (isTarget) {
-            view.style.display = 'flex';
-            view.classList.add('active');
-            found = true;
-          } else if (view.classList.contains('view-panel') || 
-                     view.classList.contains('tab-content') || 
-                     view.classList.contains('panel-view') ||
-                     view.classList.contains('view-section')) {
-            view.style.display = 'none';
-            view.classList.remove('active');
-          }
-        });
-
-        // Fallback search
-        if (!found) {
-          const directTarget = document.getElementById(targetId) || 
-                               document.getElementById('view-' + targetId) || 
-                               document.getElementById('tab-' + targetId);
-          if (directTarget) {
-            directTarget.style.display = 'flex';
-            directTarget.classList.add('active');
-          }
+    // ELIX OS Universal Window Control Binding & Declarative Tab Routing
+    (function initWindowControlBindings() {
+      let ipc = null;
+      try {
+        if (typeof window !== "undefined" && window.require) {
+          ipc = window.require("electron").ipcRenderer;
+        } else if (window.electron && window.electron.ipcRenderer) {
+          ipc = window.electron.ipcRenderer;
         }
-      });
-    });
-  }
+      } catch (e) {}
 
-  function setupWindowControls() {
-    let ipcRenderer = null;
-    try {
-      if (typeof window !== 'undefined' && window.require) {
-        ipcRenderer = window.require('electron').ipcRenderer;
-      } else if (window.electron && window.electron.ipcRenderer) {
-        ipcRenderer = window.electron.ipcRenderer;
+      const sendAction = function(action) {
+        if (ipc) {
+          ipc.send("window-" + action);
+          ipc.send("elix:window:" + action);
+          ipc.send("app-window-" + action);
+        } else if (typeof ws !== "undefined" && ws && ws.readyState === 1) {
+          ws.send(JSON.stringify({ type: "window_action", action: "window-" + action }));
+        } else if (window.__ELIX_WS__ && window.__ELIX_WS__.readyState === 1) {
+          window.__ELIX_WS__.send(JSON.stringify({ type: "window_action", action: "window-" + action }));
+        }
+      };
+
+      function bindControls() {
+        document.getElementById("win-min")?.addEventListener("click", () => sendAction("minimize"));
+        document.getElementById("win-max")?.addEventListener("click", () => sendAction("maximize"));
+        document.getElementById("win-close")?.addEventListener("click", () => sendAction("close"));
+        document.getElementById("btn-minimize")?.addEventListener("click", () => sendAction("minimize"));
+        document.getElementById("btn-maximize")?.addEventListener("click", () => sendAction("maximize"));
+        document.getElementById("btn-close")?.addEventListener("click", () => sendAction("close"));
+        document.getElementById("btnMin")?.addEventListener("click", () => sendAction("minimize"));
+        document.getElementById("btnMax")?.addEventListener("click", () => sendAction("maximize"));
+        document.getElementById("btnClose")?.addEventListener("click", () => sendAction("close"));
+
+        // Declarative tab routing
+        const navButtons = document.querySelectorAll("[data-tab], [data-target], [data-view], .nav-item, .tab-btn");
+        navButtons.forEach(btn => {
+          if (btn.__elix_tab_bound) return;
+          btn.__elix_tab_bound = true;
+          btn.addEventListener("click", (e) => {
+            const targetId = btn.getAttribute("data-tab") || btn.getAttribute("data-target") || btn.getAttribute("data-view") || btn.getAttribute("href")?.replace(/^#/, "");
+            if (!targetId) return;
+            const container = btn.closest("nav, .sidebar, .tab-bar, .sub-nav, .activity-rail, .nav-tabs, .tabs") || btn.parentElement || document;
+            container.querySelectorAll(".nav-item, .tab-btn, button, a").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const parentViewScope = btn.closest(".app-container, .main-container, .center-workspace, .workspace, main, body") || document;
+            const views = parentViewScope.querySelectorAll(".view-panel, .tab-content, .panel-view, .view-section, section[id], div[id^=\"view-\"], div[id^=\"tab-\"]");
+            views.forEach(view => {
+              const isTarget = view.id === targetId || view.id === "view-" + targetId || view.id === "tab-" + targetId || view.getAttribute("data-panel") === targetId || view.getAttribute("data-view") === targetId;
+              if (isTarget) {
+                view.style.display = "flex";
+                view.classList.add("active");
+              } else if (view.classList.contains("view-panel") || view.classList.contains("tab-content") || view.classList.contains("panel-view") || view.classList.contains("view-section")) {
+                view.style.display = "none";
+                view.classList.remove("active");
+              }
+            });
+          });
+        });
       }
-    } catch (e) {}
 
-    const sendWinAction = (channel) => {
-      if (ipcRenderer) {
-        ipcRenderer.send(channel);
-      } else if (typeof ws !== 'undefined' && ws && ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'window_action', action: channel }));
-      } else if (window.__ELIX_WS__ && window.__ELIX_WS__.readyState === 1) {
-        window.__ELIX_WS__.send(JSON.stringify({ type: 'window_action', action: channel }));
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindControls);
       } else {
-        console.log('[Window Action]', channel);
+        bindControls();
       }
-    };
-
-    window.sendNativeWindowCommand = sendWinAction;
-
-    const minBtns = document.querySelectorAll('#win-min, #btnMin, .control-btn-min, [data-win-action="min"]');
-    const maxBtns = document.querySelectorAll('#win-max, #btnMax, .control-btn-max, [data-win-action="max"]');
-    const closeBtns = document.querySelectorAll('#win-close, #btnClose, .control-btn-close, [data-win-action="close"]');
-
-    minBtns.forEach(b => {
-      if (!b.__win_bound) {
-        b.__win_bound = true;
-        b.addEventListener('click', () => sendWinAction('elix:window:minimize'));
-      }
-    });
-    maxBtns.forEach(b => {
-      if (!b.__win_bound) {
-        b.__win_bound = true;
-        b.addEventListener('click', () => sendWinAction('elix:window:maximize'));
-      }
-    });
-    closeBtns.forEach(b => {
-      if (!b.__win_bound) {
-        b.__win_bound = true;
-        b.addEventListener('click', () => sendWinAction('elix:window:close'));
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setupUniversalTabRouting();
-      setupWindowControls();
-    });
-  } else {
-    setupUniversalTabRouting();
-    setupWindowControls();
-  }
-})();
-
+    })();
   </script>
-  
 </body>
 </html>
