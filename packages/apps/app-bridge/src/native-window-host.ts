@@ -142,9 +142,24 @@ export class NativeWindowHost implements WindowHost {
   }
 
   private resolveElectronLaunchCommand(): { command: string; argsPrefix: string[]; useShell: boolean } {
-    let electronBin = 'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\node_modules\\electron\\dist\\electron.exe';
-    if (!fs.existsSync(electronBin)) {
-      try { electronBin = require('electron'); } catch (_) { electronBin = 'electron'; }
+    let electronBin = 'electron';
+    const candidatePaths = [
+      path.resolve(process.cwd(), '../../node_modules/electron/dist/electron.exe'),
+      path.resolve(process.cwd(), 'node_modules/electron/dist/electron.exe'),
+      path.resolve(__dirname, '../../../node_modules/electron/dist/electron.exe'),
+      path.join(os.homedir(), '.gemini/antigravity/scratch/elix/node_modules/electron/dist/electron.exe')
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        electronBin = p;
+        break;
+      }
+    }
+    if (electronBin === 'electron') {
+      try {
+        const resolved = require('electron');
+        if (typeof resolved === 'string' && fs.existsSync(resolved)) electronBin = resolved;
+      } catch (_) {}
     }
 
     if (electronBin && fs.existsSync(electronBin)) {
@@ -523,9 +538,24 @@ export function broadcastEvent(eventData: Record<string, any>): void {
  * Standalone helper to launch a native Electron window
  */
 export function launchNativeWindow(targetUrl: string, width = 1180, height = 780, appId = ''): void {
-  let electronBin = 'C:\\Users\\S.LAKSHMI NARAYANA\\.gemini\\antigravity\\scratch\\elix\\node_modules\\electron\\dist\\electron.exe';
-  if (!fs.existsSync(electronBin)) {
-    try { electronBin = require('electron'); } catch (_) { electronBin = 'electron'; }
+  let electronBin = 'electron';
+  const candidatePaths = [
+    path.resolve(process.cwd(), '../../node_modules/electron/dist/electron.exe'),
+    path.resolve(process.cwd(), 'node_modules/electron/dist/electron.exe'),
+    path.resolve(__dirname, '../../../node_modules/electron/dist/electron.exe'),
+    path.join(os.homedir(), '.gemini/antigravity/scratch/elix/node_modules/electron/dist/electron.exe')
+  ];
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      electronBin = p;
+      break;
+    }
+  }
+  if (electronBin === 'electron') {
+    try {
+      const resolved = require('electron');
+      if (typeof resolved === 'string' && fs.existsSync(resolved)) electronBin = resolved;
+    } catch (_) {}
   }
 
   const candidateShells = [
