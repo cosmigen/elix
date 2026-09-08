@@ -1,0 +1,13 @@
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+*.log
+logs/
+.elix-backups/
+.elix-git/
+test-sandbox-*
+.cache/
+.DS_Store
+Thumbs.db
