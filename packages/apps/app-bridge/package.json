@@ -69,6 +69,7 @@
     "test": "tsx tests/validator.test.ts",
     "test:all": "node tests/runner.mjs",
     "tui": "tsx src/tui/test-harness.ts",
+    "host": "tsx src/host-service.ts",
     "demo": "tsx src/tui/automated-demo.ts",
     "showcase": "powershell -ExecutionPolicy Bypass -File run-visible-demo.ps1"
   },

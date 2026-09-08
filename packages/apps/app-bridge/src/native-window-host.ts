@@ -216,14 +216,18 @@ export class NativeWindowHost implements WindowHost {
     const isDetached = windowOverrides?.detached ?? true;
     const { command, argsPrefix, useShell } = this.resolveElectronLaunchCommand();
 
-    // Prepare argument array
+    // Ensure Elix host service is active on port 7391 so the bridge connects
+    ensureIpcServer(7391);
+
+    // Prepare argument array using --flag=value format to handle Windows path spaces
     const args = [
       ...argsPrefix,
       shellScriptPath,
-      safeUrl,
-      String(width || 1180),
-      String(height || 780),
-      String(appId),
+      `--url=${safeUrl}`,
+      `--width=${width || 1180}`,
+      `--height=${height || 780}`,
+      `--appId=${appId}`,
+      `--title=${_title || 'ELIX Application'}`,
     ];
 
     // Spawn independent background GUI process
@@ -570,11 +574,19 @@ export function launchNativeWindow(targetUrl: string, width = 1180, height = 780
   ];
   const shellScriptPath = candidateShells.find((p) => fs.existsSync(p)) || path.resolve(__dirname, 'native-shell.cjs');
 
+  // Ensure Elix host service is active on port 7391 so the bridge connects
+  ensureIpcServer(7391);
+
   const useDirect = Boolean(electronBin && fs.existsSync(electronBin));
   const command = useDirect ? electronBin : (process.platform === 'win32' ? 'npx.cmd' : 'npx');
-  const args = useDirect
-    ? [shellScriptPath, targetUrl, String(width), String(height), appId]
-    : ['electron', shellScriptPath, targetUrl, String(width), String(height), appId];
+  const flagArgs = [
+    shellScriptPath,
+    `--url=${targetUrl}`,
+    `--width=${width}`,
+    `--height=${height}`,
+    `--appId=${appId}`,
+  ];
+  const args = useDirect ? flagArgs : ['electron', ...flagArgs];
 
   const child = child_process.spawn(command, args, {
     detached: true,
