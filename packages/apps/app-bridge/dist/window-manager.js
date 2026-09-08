@@ -30,6 +30,8 @@ export class ElixAppWindow extends EventEmitter {
     ipcSession;
     launchedAt;
     title;
+    /** OS process ID of the spawned Electron/native host, if known */
+    pid;
     constructor(id, app, url, initialGeometry, windowOverrides) {
         super();
         this.id = id;
@@ -178,6 +180,12 @@ export class ElixAppWindow extends EventEmitter {
         this.emit('close');
         this.emit('state-change', this.state);
         this.removeAllListeners();
+    }
+    /**
+     * Destroy the window handle (alias of close for native host teardown).
+     */
+    destroy() {
+        void this.close();
     }
     /**
      * Set always on top behavior

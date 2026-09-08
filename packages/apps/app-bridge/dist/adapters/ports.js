@@ -91,4 +91,118 @@ export class EventEmitterEventSink {
         this.emitter.off(event, listener);
     }
 }
+/**
+ * Mock Window Host for standalone Node.js environments and automated interactive TUI testing
+ */
+export class MockWindowHost {
+    windows = new Map();
+    simulatedHandlers = new Map();
+    defaultTimeoutMs;
+    constructor(options) {
+        this.defaultTimeoutMs = options?.defaultTimeoutMs ?? 500;
+    }
+    registerCapabilityHandler(appId, capability, handler) {
+        this.simulatedHandlers.set(`${appId}:${capability}`, handler);
+    }
+    async launch(appId, initialRoute, windowOverrides) {
+        if (this.windows.has(appId)) {
+            const existing = this.windows.get(appId);
+            existing.state = 'focused';
+            return existing;
+        }
+        const { ElixAppWindow: WinClass } = await import('../window-manager.js');
+        const mockApp = {
+            manifest: {
+                id: appId,
+                name: appId,
+                version: '1.0.0',
+                description: 'Mock Window',
+                author: { name: 'ELIX Mock', email: 'mock@elix.os' },
+                entry: 'dist/index.html',
+                window: {
+                    width: 480,
+                    height: 600,
+                    frame: false,
+                    transparent: true,
+                    ...windowOverrides,
+                },
+            },
+            installPath: `/mock/apps/${appId}`,
+            installedAt: Date.now(),
+            updatedAt: Date.now(),
+            state: 'idle',
+            registeredTools: [],
+        };
+        const win = new WinClass(`win_${appId}_mock`, mockApp, `file:///mock/apps/${appId}/dist/index.html${initialRoute || ''}`, { x: 100, y: 100, width: 480, height: 600 }, windowOverrides);
+        win.state = 'open';
+        this.windows.set(appId, win);
+        return win;
+    }
+    async focus(appIdOrWindowId) {
+        const win = this.getWindow(appIdOrWindowId);
+        if (win) {
+            win.state = 'focused';
+            return true;
+        }
+        return false;
+    }
+    async close(appIdOrWindowId) {
+        const win = this.getWindow(appIdOrWindowId);
+        if (win) {
+            win.state = 'closed';
+            this.windows.delete(win.appId);
+            return true;
+        }
+        return false;
+    }
+    listWindows() {
+        return Array.from(this.windows.values()).filter((w) => w.state !== 'closed');
+    }
+    getWindow(appIdOrWindowId) {
+        for (const [appId, win] of this.windows.entries()) {
+            if (appId === appIdOrWindowId || win.id === appIdOrWindowId) {
+                return win;
+            }
+        }
+        return undefined;
+    }
+    /**
+     * Dispatches a capability tool call to the application.
+     * Checks for an active simulated handler, or races live webview with 500ms timeout,
+     * returning standard mock success response immediately instead of hanging.
+     */
+    async sendToolCall(appId, capabilityName, args, timeoutMs = this.defaultTimeoutMs) {
+        const key = `${appId}:${capabilityName}`;
+        if (this.simulatedHandlers.has(key)) {
+            const handler = this.simulatedHandlers.get(key);
+            return Promise.resolve(handler(args));
+        }
+        const win = this.getWindow(appId);
+        if (win && win.state !== 'closed') {
+            try {
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
+                const liveCall = win.sendToolCall(capabilityName, args, timeoutMs);
+                return await Promise.race([liveCall, timeoutPromise]);
+            }
+            catch {
+                // Fallback to standard mock response
+            }
+        }
+        return {
+            success: true,
+            result: {
+                status: 'ok',
+                appId,
+                capability: capabilityName,
+                data: args,
+                receivedParams: args,
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+    async callAppCapability(appId, capability, params) {
+        return this.sendToolCall(appId, capability, params);
+    }
+}
+export { NativeWindowHost, broadcastToWindows, broadcastEvent, ensureIpcServer, launchNativeWindow } from '../native-window-host.js';
 //# sourceMappingURL=ports.js.map

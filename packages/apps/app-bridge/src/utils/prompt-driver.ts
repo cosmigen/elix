@@ -27,7 +27,7 @@ export function getReadlineInterface(): readline.Interface {
     sharedRl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      terminal: false,
+      terminal: Boolean(process.stdin.isTTY),
     });
 
     sharedRl.on('line', (line: string) => {
@@ -105,6 +105,15 @@ export const log = {
 };
 
 export function askQuestion(query: string): Promise<string> {
+  if (typeof process.stdin.setRawMode === 'function') {
+    try {
+      process.stdin.setRawMode(false);
+    } catch (_) {}
+  }
+  try {
+    process.stdin.resume();
+  } catch (_) {}
+
   getReadlineInterface();
   if (query) {
     process.stdout.write(query);

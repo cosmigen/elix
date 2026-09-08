@@ -7,6 +7,14 @@
  * @module @deepseek-ai/elix-app-bridge/tui/test-harness
  */
 /**
+ * Initialize test harness WebSocket Server
+ */
+export declare function initTestHarnessWss(port?: number): import("../local-ipc-server.js").LocalIpcServer;
+/**
+ * Broadcast tool execution result to all connected client windows
+ */
+export declare function broadcastToolResult(payload: any): void;
+/**
  * Package a demo directory into a .elixapp archive
  */
 export declare function packageDemoApp(demoDir: string, outputZipPath: string): void;

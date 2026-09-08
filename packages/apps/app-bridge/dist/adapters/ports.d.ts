@@ -103,4 +103,29 @@ export declare class EventEmitterEventSink implements EventSink {
     on(event: string, listener: (...args: any[]) => void): () => void;
     off(event: string, listener: (...args: any[]) => void): void;
 }
+/**
+ * Mock Window Host for standalone Node.js environments and automated interactive TUI testing
+ */
+export declare class MockWindowHost implements WindowHost {
+    private windows;
+    private simulatedHandlers;
+    private defaultTimeoutMs;
+    constructor(options?: {
+        defaultTimeoutMs?: number;
+    });
+    registerCapabilityHandler(appId: string, capability: string, handler: (params: any) => Promise<any> | any): void;
+    launch(appId: string, initialRoute?: string, windowOverrides?: Partial<ElixAppWindowConfig>): Promise<ElixAppWindow>;
+    focus(appIdOrWindowId: string): Promise<boolean>;
+    close(appIdOrWindowId: string): Promise<boolean>;
+    listWindows(): ElixAppWindow[];
+    getWindow(appIdOrWindowId: string): ElixAppWindow | undefined;
+    /**
+     * Dispatches a capability tool call to the application.
+     * Checks for an active simulated handler, or races live webview with 500ms timeout,
+     * returning standard mock success response immediately instead of hanging.
+     */
+    sendToolCall<T = any, R = any>(appId: string, capabilityName: string, args: T, timeoutMs?: number): Promise<R>;
+    callAppCapability(appId: string, capability: string, params: any): Promise<any>;
+}
+export { NativeWindowHost, type NativeWindowHostOptions, broadcastToWindows, broadcastEvent, ensureIpcServer, launchNativeWindow } from '../native-window-host.js';
 //# sourceMappingURL=ports.d.ts.map

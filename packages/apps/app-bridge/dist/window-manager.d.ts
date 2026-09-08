@@ -39,6 +39,8 @@ export declare class ElixAppWindow extends EventEmitter {
     readonly ipcSession: ElixWindowIpcSession;
     readonly launchedAt: number;
     title: string;
+    /** OS process ID of the spawned Electron/native host, if known */
+    pid?: number;
     constructor(id: string, app: InstalledApp, url: string, initialGeometry: WindowGeometry, windowOverrides?: Partial<ElixAppWindowConfig>);
     /**
      * Focus the window
@@ -64,6 +66,10 @@ export declare class ElixAppWindow extends EventEmitter {
      * Close the window
      */
     close(): Promise<void>;
+    /**
+     * Destroy the window handle (alias of close for native host teardown).
+     */
+    destroy(): void;
     /**
      * Set always on top behavior
      */

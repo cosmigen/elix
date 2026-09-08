@@ -17,6 +17,7 @@ export interface AppInfoSummary {
     url?: string;
     capabilities: string[];
     permissions: string[];
+    mountedToolsCount?: number;
 }
 /**
  * Creates the 4 mandatory AI app management tool definitions
@@ -30,15 +31,33 @@ export declare function createManagementTools(installer: ElixAppInstaller, windo
     [key: string]: any;
 }): CoreToolDefinition[];
 /**
- * Registers all 4 universal application management tools onto a ToolSink or Microkernel Context.
+ * Creates the 4 host-level OS access primitives for ELIX OS:
+ * 1. sys_exec_code
+ * 2. sys_fs_list
+ * 3. sys_fs_read_write
+ * 4. sys_hardware_scan
+ */
+export declare function createSystemTools(): CoreToolDefinition[];
+/**
+ * Registers all universal application management and system tools onto a ToolSink or Microkernel Context.
  *
  * @param toolSinkOrCtx ToolSink port or Microkernel Context
  * @param installer Package Installer instance
  * @param windowHost Window Host instance
- * @returns Disposer function to unregister all 4 management tools
+ * @returns Disposer function to unregister all tools
  */
 export declare function registerManagementTools(toolSinkOrCtx: ToolSink | {
     tools?: any;
     [key: string]: any;
 }, installer: ElixAppInstaller, windowHost: WindowHost): () => void;
+/**
+ * Registers the 4 host-level OS access primitives onto a ToolSink or Microkernel Context.
+ *
+ * @param toolSinkOrCtx ToolSink port or Microkernel Context
+ * @returns Disposer function to unregister all system tools
+ */
+export declare function registerSystemTools(toolSinkOrCtx: ToolSink | {
+    tools?: any;
+    [key: string]: any;
+}): () => void;
 //# sourceMappingURL=management-tools.d.ts.map

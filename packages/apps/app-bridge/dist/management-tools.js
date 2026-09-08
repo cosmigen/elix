@@ -6,6 +6,8 @@
  */
 import { defineTool } from './utils/tools.js';
 import { registerAppTools, unregisterAppTools } from './tool-registry.js';
+import { sysFsList, sysFsReadWrite, sysHardwareScan } from './sys-primitives.js';
+import { globalSysExecManager } from './sys-exec-stream.js';
 /**
  * Creates the 4 mandatory AI app management tool definitions
  *
@@ -58,6 +60,7 @@ export function createManagementTools(installer, windowHost, toolSinkOrCtx) {
                     url: win?.url,
                     capabilities: capNames,
                     permissions: app.manifest.permissions || [],
+                    mountedToolsCount: capNames.length,
                 });
             }
             return {
@@ -218,15 +221,151 @@ export function createManagementTools(installer, windowHost, toolSinkOrCtx) {
     return [getAppListTool, openAppTool, closeAppTool, installAppTool, uninstallAppTool];
 }
 /**
- * Registers all 4 universal application management tools onto a ToolSink or Microkernel Context.
+ * Creates the 4 host-level OS access primitives for ELIX OS:
+ * 1. sys_exec_code
+ * 2. sys_fs_list
+ * 3. sys_fs_read_write
+ * 4. sys_hardware_scan
+ */
+export function createSystemTools() {
+    // sys_exec_code
+    const sysExecCodeTool = defineTool({
+        name: 'sys_exec_code',
+        description: 'Execute code or terminal commands (Node.js, Python, PowerShell) with real-time streaming output over WebSocket and process tree termination safety.',
+        parameters: {
+            type: 'object',
+            properties: {
+                command: { type: 'string', description: "Executable or shell to run ('node', 'python', 'powershell', 'bash')", default: 'node' },
+                code: { type: 'string', description: 'Script source code to execute' },
+                args: { type: 'array', items: { type: 'string' }, description: 'Command line arguments' },
+                timeoutMs: { type: 'number', description: 'Execution timeout in ms (default: 15000)', default: 15000 },
+                cwd: { type: 'string', description: 'Working directory path' },
+                env: { type: 'object', description: 'Environment variables object' },
+                executionId: { type: 'string', description: 'Unique tracking ID for streaming output' },
+            },
+            required: [],
+        },
+        execute: async (args) => {
+            const executionId = args?.executionId || `exec_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+            return new Promise((resolve) => {
+                globalSysExecManager.execute({
+                    executionId,
+                    command: args?.command || 'node',
+                    code: args?.code,
+                    args: args?.args || [],
+                    timeoutMs: args?.timeoutMs ?? 15000,
+                    cwd: args?.cwd,
+                    env: args?.env,
+                }, () => true, (res) => resolve(res.result || res));
+            });
+        },
+    });
+    // sys_fs_list
+    const sysFsListTool = defineTool({
+        name: 'sys_fs_list',
+        description: 'Enumerate physical Windows drives, standard user folders, and directories with file sizes, POSIX permissions, timestamps, and MIME types.',
+        parameters: {
+            type: 'object',
+            properties: {
+                dirPath: { type: 'string', description: 'Target directory path to inspect (empty for root drives)' },
+                includeHidden: { type: 'boolean', description: 'Whether to include hidden and dot files', default: false },
+            },
+            required: [],
+        },
+        execute: async (args) => {
+            return sysFsList(args?.dirPath, args?.includeHidden);
+        },
+    });
+    // sys_fs_read_write
+    const sysFsReadWriteTool = defineTool({
+        name: 'sys_fs_read_write',
+        description: 'Read, write, delete, move, create directories, and inspect file stats on physical storage with protected Windows system root security guards.',
+        parameters: {
+            type: 'object',
+            properties: {
+                action: {
+                    type: 'string',
+                    enum: ['read', 'write', 'delete', 'mkdir', 'move', 'copy', 'exists', 'stat'],
+                    description: 'Filesystem operation to perform',
+                },
+                targetPath: { type: 'string', description: 'Canonical target file or directory path' },
+                content: { type: 'string', description: 'Text content to write (for action: write)' },
+                encoding: { type: 'string', description: 'Text encoding (default: utf8)', default: 'utf8' },
+                destinationPath: { type: 'string', description: 'Destination path for move or copy actions' },
+            },
+            required: ['action', 'targetPath'],
+        },
+        execute: async (args) => {
+            return sysFsReadWrite(args);
+        },
+    });
+    // sys_hardware_scan
+    const sysHardwareScanTool = defineTool({
+        name: 'sys_hardware_scan',
+        description: 'Scan host hardware peripherals, active network adapters with IP/MAC addresses, connected audio/video hardware, and display monitor topologies.',
+        parameters: {
+            type: 'object',
+            properties: {},
+            required: [],
+        },
+        execute: async () => {
+            return sysHardwareScan();
+        },
+    });
+    return [sysExecCodeTool, sysFsListTool, sysFsReadWriteTool, sysHardwareScanTool];
+}
+/**
+ * Registers all universal application management and system tools onto a ToolSink or Microkernel Context.
  *
  * @param toolSinkOrCtx ToolSink port or Microkernel Context
  * @param installer Package Installer instance
  * @param windowHost Window Host instance
- * @returns Disposer function to unregister all 4 management tools
+ * @returns Disposer function to unregister all tools
  */
 export function registerManagementTools(toolSinkOrCtx, installer, windowHost) {
     const tools = createManagementTools(installer, windowHost, toolSinkOrCtx);
+    const disposers = [];
+    const sink = 'registerTool' in toolSinkOrCtx && typeof toolSinkOrCtx.registerTool === 'function'
+        ? toolSinkOrCtx
+        : {
+            registerTool: (tool) => {
+                const toolsSvc = toolSinkOrCtx.tools;
+                if (toolsSvc && typeof toolsSvc.register === 'function') {
+                    const res = toolsSvc.register(tool);
+                    return typeof res === 'function' ? res : () => toolsSvc.unregister?.(tool.name);
+                }
+                return () => { };
+            },
+            unregisterTool: (name) => {
+                const toolsSvc = toolSinkOrCtx.tools;
+                if (toolsSvc && typeof toolsSvc.unregister === 'function') {
+                    toolsSvc.unregister(name);
+                }
+            },
+        };
+    for (const tool of tools) {
+        const disposeFn = sink.registerTool(tool);
+        disposers.push(disposeFn);
+    }
+    return () => {
+        for (const dispose of disposers) {
+            try {
+                dispose();
+            }
+            catch {
+                // Ignore dispose error
+            }
+        }
+    };
+}
+/**
+ * Registers the 4 host-level OS access primitives onto a ToolSink or Microkernel Context.
+ *
+ * @param toolSinkOrCtx ToolSink port or Microkernel Context
+ * @returns Disposer function to unregister all system tools
+ */
+export function registerSystemTools(toolSinkOrCtx) {
+    const tools = createSystemTools();
     const disposers = [];
     const sink = 'registerTool' in toolSinkOrCtx && typeof toolSinkOrCtx.registerTool === 'function'
         ? toolSinkOrCtx

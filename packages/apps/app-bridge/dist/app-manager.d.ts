@@ -83,6 +83,11 @@ export declare class ElixAppManager extends EventEmitter {
      */
     repair(appId: string): Promise<InstalledApp>;
     /**
+     * Rebuilds reference demo applications from demo-apps/ directory and updates installed apps,
+     * ensuring the latest index.html and assets are properly synced and copied to ~/.elix/apps/
+     */
+    rebuildDemoApps(demoAppsDir?: string): Promise<InstalledApp[]>;
+    /**
      * Prepare uninstall impact plan and preflight report
      */
     prepareUninstall(appId: string): Promise<UninstallImpactPlan>;
@@ -94,6 +99,10 @@ export declare class ElixAppManager extends EventEmitter {
      * Launch or focus an installed application window
      */
     launch(appId: string, initialRoute?: string, windowOverrides?: Partial<ElixAppWindowConfig>): Promise<ElixAppWindow>;
+    /**
+     * Open / launch an application window (alias for launch)
+     */
+    openApp(appId: string, initialRoute?: string, windowOverrides?: Partial<ElixAppWindowConfig>): Promise<ElixAppWindow>;
     /**
      * Close an active application window
      */

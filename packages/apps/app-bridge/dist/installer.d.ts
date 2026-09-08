@@ -28,7 +28,7 @@ export declare const PERMISSION_METADATA: Record<string, {
  */
 export declare class ElixAppInstaller extends EventEmitter {
     readonly storage: StoragePartitionManager;
-    private baseDir;
+    readonly baseDir: string;
     private appsDir;
     private stagingDir;
     private registryFile;
