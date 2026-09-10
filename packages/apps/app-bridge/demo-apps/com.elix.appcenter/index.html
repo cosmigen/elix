@@ -95,42 +95,46 @@
     }
 
     /* Segmented Liquid Metal Window Controls */
-    .window-controls-capsule {
-      display: flex;
+    .window-controls-capsule, .liquid-metal-capsule {
+      display: inline-flex;
       align-items: center;
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 2px;
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 5px rgba(0, 0, 0, 0.4);
+      gap: 8px;
+      padding: 4px 10px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%), #141a29;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 14px rgba(0, 0, 0, 0.45);
+      border-radius: 9999px;
       -webkit-app-region: no-drag;
+      z-index: 9999;
     }
 
     .control-btn {
       width: 26px;
-      height: 20px;
+      height: 22px;
       border: none;
       background: transparent;
-      color: var(--text-muted);
+      color: #94a3b8;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 8px;
       transition: all 0.15s ease;
+      -webkit-app-region: no-drag;
+      pointer-events: auto;
     }
 
     .control-btn svg {
       width: 10px;
       height: 10px;
       stroke: currentColor;
-      stroke-width: 1.5;
+      stroke-width: 1.6;
       fill: none;
     }
 
     .control-btn:hover {
       background: rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
+      color: #f8fafc;
     }
 
     .control-btn.btn-close:hover {
@@ -167,6 +171,7 @@
       font-size: 11px;
       outline: none;
       margin-bottom: 8px;
+      transition: border-color 0.2s ease;
     }
 
     .search-box:focus {
@@ -326,6 +331,7 @@
       justify-content: center;
       font-size: 20px;
       border: 1px solid var(--border-main);
+      flex-shrink: 0;
     }
 
     .card-meta {
@@ -333,18 +339,26 @@
       display: flex;
       flex-direction: column;
       gap: 2px;
+      overflow: hidden;
     }
 
     .card-name {
       font-size: 13px;
       font-weight: 600;
       color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .card-sub {
       font-size: 11px;
       color: var(--text-dim);
       line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .card-bottom {
@@ -380,6 +394,23 @@
       background: rgba(16, 185, 129, 0.2);
       border: 1px solid rgba(16, 185, 129, 0.4);
       color: var(--accent-emerald);
+    }
+
+    .btn-open:hover {
+      background: var(--accent-emerald);
+      color: #080c16;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-update {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--primary-cyan);
+    }
+
+    .btn-update:hover {
+      background: var(--primary-cyan);
+      color: #080c16;
     }
 
     /* Slide-Over App Detail Drawer */
@@ -418,6 +449,21 @@
       font-size: 16px;
     }
 
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 50px 20px;
+      text-align: center;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-main);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
     /* Bottom Floating Tasks HUD */
     .floating-tasks-hud {
       position: fixed;
@@ -434,6 +480,7 @@
       justify-content: space-between;
       gap: 16px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.3s ease;
     }
 
     .task-progress-bar {
@@ -446,8 +493,9 @@
 
     .task-progress-fill {
       height: 100%;
-      width: 68%;
+      width: 100%;
       background: linear-gradient(90deg, #38bdf8 0%, #10b981 100%);
+      transition: width 0.4s ease;
     }
 
     /* Bottom Status Bar */
@@ -463,99 +511,6 @@
       color: var(--text-dim);
       font-family: var(--font-mono);
       z-index: 100;
-    }
-  
-    /* Brushed Liquid Metal Window Control Capsule */
-    .liquid-metal-capsule {
-      display: inline-flex;
-      align-items: center;
-      background: linear-gradient(180deg, #2a3346 0%, #151b28 100%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.5);
-      border-radius: 20px;
-      padding: 3px 6px;
-      gap: 6px;
-      -webkit-app-region: no-drag;
-    }
-    .control-btn {
-      width: 26px;
-      height: 22px;
-      border: none;
-      background: transparent;
-      color: #94a3b8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.15s ease;
-    }
-    .control-btn svg {
-      width: 11px;
-      height: 11px;
-      stroke: currentColor;
-      stroke-width: 1.6;
-      fill: none;
-    }
-    .control-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #f8fafc;
-    }
-    .control-btn.btn-close:hover {
-      background: rgba(239, 68, 68, 0.9);
-      color: #ffffff;
-    }
-
-      /* ELIX OS Universal Window Framing & Liquid Metal Capsule Controls */
-    .window-controls-capsule, .liquid-metal-capsule {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 10px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%), #141a29;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 14px rgba(0, 0, 0, 0.45);
-      border-radius: 9999px;
-      -webkit-app-region: no-drag;
-      z-index: 9999;
-    }
-
-    .window-controls-capsule button, .window-controls-capsule .control-btn,
-    .liquid-metal-capsule button, .liquid-metal-capsule .control-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      width: 22px;
-      height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.15s ease-in-out;
-      -webkit-app-region: no-drag;
-      pointer-events: auto;
-    }
-
-    .window-controls-capsule button svg, .window-controls-capsule .control-btn svg,
-    .liquid-metal-capsule button svg, .liquid-metal-capsule .control-btn svg {
-      width: 10px;
-      height: 10px;
-      stroke: currentColor;
-      stroke-width: 1.6;
-      fill: none;
-    }
-
-    .window-controls-capsule button:hover, .window-controls-capsule .control-btn:hover,
-    .liquid-metal-capsule button:hover, .liquid-metal-capsule .control-btn:hover {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .window-controls-capsule button.btn-close:hover, .window-controls-capsule .control-btn.btn-close:hover,
-    .liquid-metal-capsule button.btn-close:hover, .liquid-metal-capsule .control-btn.btn-close:hover {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
     }
   </style>
 </head>
@@ -599,32 +554,32 @@
     <div class="sidebar">
       <input type="text" class="search-box" placeholder="Search catalog (Ctrl+F)" id="searchBox" />
 
-      <div class="nav-item active" onclick="switchSection('discover')">
+      <div class="nav-item active" data-section="discover" onclick="switchSection('discover')">
         <span>✨ Discover</span>
       </div>
-      <div class="nav-item" onclick="switchSection('installed')">
+      <div class="nav-item" data-section="installed" onclick="switchSection('installed')">
         <span>💻 Installed Apps</span>
-        <span class="nav-badge" id="badgeInstalled">18</span>
+        <span class="nav-badge" id="badgeInstalled">19</span>
       </div>
-      <div class="nav-item" onclick="switchSection('updates')">
+      <div class="nav-item" data-section="updates" onclick="switchSection('updates')">
         <span>🔄 Updates</span>
-        <span class="nav-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--primary-cyan);">2</span>
+        <span class="nav-badge" id="badgeUpdates" style="background: rgba(56, 189, 248, 0.2); color: var(--primary-cyan);">2</span>
       </div>
 
       <div class="sidebar-section">Categories</div>
-      <div class="nav-item" onclick="filterCategory('productivity')">
+      <div class="nav-item" data-category="productivity" onclick="filterCategory('productivity')">
         <span>📝 Productivity</span>
       </div>
-      <div class="nav-item" onclick="filterCategory('developer')">
+      <div class="nav-item" data-category="developer" onclick="filterCategory('developer')">
         <span>⚡ Dev Tools</span>
       </div>
-      <div class="nav-item" onclick="filterCategory('media')">
+      <div class="nav-item" data-category="media" onclick="filterCategory('media')">
         <span>🎬 Media & 3D</span>
       </div>
-      <div class="nav-item" onclick="filterCategory('utilities')">
+      <div class="nav-item" data-category="utilities" onclick="filterCategory('utilities')">
         <span>🛠️ Utilities</span>
       </div>
-      <div class="nav-item" onclick="filterCategory('ai')">
+      <div class="nav-item" data-category="ai" onclick="filterCategory('ai')">
         <span>🧠 AI Extensions</span>
       </div>
     </div>
@@ -632,77 +587,26 @@
     <!-- Main Workspace Area -->
     <div class="content-area">
       <!-- Featured Hero Carousel -->
-      <div class="hero-banner">
+      <div class="hero-banner" id="heroBanner">
         <div>
           <span style="font-size: 11px; font-weight: 700; color: var(--primary-cyan); text-transform: uppercase;">Featured Application</span>
           <div class="hero-title">ELIX 3D Studio</div>
           <div class="hero-desc">WebGL mesh viewer, PBR materials, and Three.js real-time rendering engine on ELIX OS.</div>
         </div>
-        <button class="hero-btn" onclick="openDrawer('com.elix.studio3d')">View Package Details</button>
+        <div style="display: flex; gap: 10px;">
+          <button class="hero-btn" onclick="openDrawer('com.elix.studio3d')">View Package Details</button>
+          <button class="hero-btn" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: none;" onclick="launchApp('com.elix.studio3d')">Launch App</button>
+        </div>
       </div>
 
       <!-- App Grid Matrix -->
       <div class="catalog-title">
         <span id="sectionTitle">Popular Applications</span>
-        <span style="font-size: 11px; color: var(--text-dim);">18 packages installed · Verified Sandbox</span>
+        <span style="font-size: 11px; color: var(--text-dim);" id="catalogSubtitle">19 packages installed · Verified Sandbox</span>
       </div>
 
-      <div class="card-grid">
-        <div class="app-card" onclick="openDrawer('com.elix.notes')">
-          <div class="card-top">
-            <div class="card-icon">📝</div>
-            <div class="card-meta">
-              <span class="card-name">ELIX Notes</span>
-              <span class="card-sub">Markdown editor with live DOM sync and AI search</span>
-            </div>
-          </div>
-          <div class="card-bottom">
-            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-emerald);">v1.0.0 · Productivity</span>
-            <button class="action-btn btn-open">Installed</button>
-          </div>
-        </div>
-
-        <div class="app-card" onclick="openDrawer('com.elix.code')">
-          <div class="card-top">
-            <div class="card-icon">💻</div>
-            <div class="card-meta">
-              <span class="card-name">ELIX Code</span>
-              <span class="card-sub">Full Monaco IDE with SQLite runner and Git diff visualizer</span>
-            </div>
-          </div>
-          <div class="card-bottom">
-            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-emerald);">v1.0.0 · Developer</span>
-            <button class="action-btn btn-open">Installed</button>
-          </div>
-        </div>
-
-        <div class="app-card" onclick="openDrawer('com.elix.sysmon')">
-          <div class="card-top">
-            <div class="card-icon">📊</div>
-            <div class="card-meta">
-              <span class="card-name">ELIX System Monitor</span>
-              <span class="card-sub">OS telemetry, Canvas sparklines, and virtualized process table</span>
-            </div>
-          </div>
-          <div class="card-bottom">
-            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-emerald);">v1.0.0 · Utilities</span>
-            <button class="action-btn btn-open">Installed</button>
-          </div>
-        </div>
-
-        <div class="app-card" onclick="openDrawer('com.elix.devices')">
-          <div class="card-top">
-            <div class="card-icon">🎧</div>
-            <div class="card-meta">
-              <span class="card-name">ELIX Devices</span>
-              <span class="card-sub">Bluetooth BLE discovery, Wi-Fi scanner, and audio VU meters</span>
-            </div>
-          </div>
-          <div class="card-bottom">
-            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--accent-emerald);">v1.0.0 · System</span>
-            <button class="action-btn btn-open">Installed</button>
-          </div>
-        </div>
+      <div class="card-grid" id="cardGrid">
+        <!-- Dynamically rendered via renderAppCards() -->
       </div>
     </div>
 
@@ -712,63 +616,817 @@
         <span style="font-size: 14px; font-weight: 700; color: var(--text-main);" id="drawerAppName">Package Details</span>
         <button class="drawer-close" onclick="closeDrawer()">✕</button>
       </div>
-      <div style="font-size: 12px; color: var(--text-muted);" id="drawerDesc">
+      <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;" id="drawerDesc">
         Package manifest and security permissions verified on ELIX OS.
       </div>
       <div style="border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
         <span style="font-size: 11px; font-weight: 700; color: var(--primary-cyan);">Declared AI Capabilities</span>
-        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);" id="drawerCaps">
+        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim); max-height: 140px; overflow-y: auto;" id="drawerCaps">
           • app_capability_runner<br />• app_inspect_metadata
         </div>
       </div>
       <div style="border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
         <span style="font-size: 11px; font-weight: 700; color: var(--accent-emerald);">Sandbox Permissions</span>
-        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim);" id="drawerPerms">
+        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-dim); max-height: 100px; overflow-y: auto;" id="drawerPerms">
           • fs:read · fs:write · ui:notification
         </div>
+      </div>
+      <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-main);" id="drawerActionArea">
+        <button class="hero-btn" id="drawerLaunchBtn" style="width: 100%; text-align: center;" onclick="launchCurrentDrawerApp()">Launch Application</button>
       </div>
     </div>
 
     <!-- Floating Task HUD -->
-    <div class="floating-tasks-hud">
-      <div style="font-size: 11px; font-weight: 600; color: var(--text-main);">Verified Package Cache: Ready</div>
+    <div class="floating-tasks-hud" id="taskHud">
+      <div style="font-size: 11px; font-weight: 600; color: var(--text-main);" id="hudStatus">Verified Package Cache: Ready</div>
       <div class="task-progress-bar">
-        <div class="task-progress-fill"></div>
+        <div class="task-progress-fill" id="hudProgressFill"></div>
       </div>
-      <div style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-emerald);">SHA-256 OK</div>
+      <div style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-emerald);" id="hudBadge">SHA-256 OK</div>
     </div>
   </div>
 
   <!-- Bottom Status Bar -->
   <div class="statusbar">
-    <div>Package Registry: <span style="color: var(--accent-emerald);">.elix/apps (18 Mounted)</span></div>
-    <div>WebSocket IPC: <span style="color: var(--primary-cyan);">ws://127.0.0.1:7391 Connected</span></div>
+    <div>Package Registry: <span style="color: var(--accent-emerald);" id="statusRegistry">.elix/apps (19 Mounted)</span></div>
+    <div>WebSocket IPC: <span style="color: var(--primary-cyan);" id="statusWs">ws://127.0.0.1:7391 Connected</span></div>
   </div>
 
   <script>
+    const APP_CATALOG = [
+  {
+    "id": "com.elix.notes",
+    "name": "ELIX Notes",
+    "version": "1.0.0",
+    "category": "productivity",
+    "categoryLabel": "Productivity",
+    "icon": "📝",
+    "description": "Smart frameless note taking app with dynamic AI agent continuity and real-time Markdown rendering",
+    "capabilities": [
+      "create_note",
+      "search_notes",
+      "delete_note",
+      "get_active_note"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "agent:memory",
+      "ui:notification"
+    ],
+    "hasUpdate": true,
+    "updateVersion": "1.0.1"
+  },
+  {
+    "id": "com.elix.documents",
+    "name": "ELIX Documents",
+    "version": "1.0.0",
+    "category": "productivity",
+    "categoryLabel": "Productivity",
+    "icon": "📄",
+    "description": "Universal document viewer and editor supporting PDF, Markdown, DOCX, Spreadsheets, and Slide decks with AI outline and search",
+    "capabilities": [
+      "open_document",
+      "search_document_text",
+      "get_document_outline",
+      "annotate_pdf",
+      "edit_spreadsheet_cell",
+      "export_document"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "ui:notification",
+      "ui:dialog",
+      "clipboard:read",
+      "clipboard:write"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.calculator",
+    "name": "ELIX Calculator",
+    "version": "1.0.0",
+    "category": "productivity",
+    "categoryLabel": "Productivity",
+    "icon": "🧮",
+    "description": "Floating frameless calculator with expression history ledger, unit conversions, and algebraic evaluation",
+    "capabilities": [
+      "calculate",
+      "get_history",
+      "clear_history",
+      "get_last_result"
+    ],
+    "permissions": [
+      "clipboard:read",
+      "clipboard:write",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.calendar",
+    "name": "ELIX Calendar & Tasks",
+    "version": "1.0.0",
+    "category": "productivity",
+    "categoryLabel": "Productivity",
+    "icon": "📅",
+    "description": "Modern smart calendar and tasks matrix with time-blocking and natural language scheduling for ELIX OS",
+    "capabilities": [
+      "create_calendar_event",
+      "add_smart_task",
+      "toggle_task_status",
+      "query_agenda"
+    ],
+    "permissions": [
+      "ui:notification",
+      "agent:memory"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.code",
+    "name": "ELIX Code",
+    "version": "1.0.0",
+    "category": "developer",
+    "categoryLabel": "Dev Tools",
+    "icon": "💻",
+    "description": "High-performance developer workspace with Monaco syntax highlighting, Git diff analysis, and SQLite database inspector",
+    "capabilities": [
+      "open_code_file",
+      "save_code_file",
+      "format_document",
+      "get_git_diff",
+      "inspect_database_table",
+      "execute_sql_query"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "clipboard:read",
+      "clipboard:write",
+      "db:sqlite",
+      "vcs:git",
+      "ui:notification"
+    ],
+    "hasUpdate": true,
+    "updateVersion": "1.1.0"
+  },
+  {
+    "id": "com.elix.terminal",
+    "name": "ELIX Terminal",
+    "version": "1.0.0",
+    "category": "developer",
+    "categoryLabel": "Dev Tools",
+    "icon": "⌨️",
+    "description": "High-performance block-based terminal emulator with multi-shell process spawning and AI command assist for ELIX OS",
+    "capabilities": [
+      "spawn_shell_session",
+      "execute_command",
+      "send_terminal_input",
+      "get_session_output",
+      "kill_session",
+      "list_active_sessions"
+    ],
+    "permissions": [
+      "process:spawn",
+      "process:kill",
+      "fs:read",
+      "fs:write",
+      "clipboard:read",
+      "clipboard:write",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.sysmon",
+    "name": "ELIX System Monitor",
+    "version": "1.0.0",
+    "category": "developer",
+    "categoryLabel": "Dev Tools",
+    "icon": "📊",
+    "description": "Real-time operating system telemetry dashboard, process manager, and hardware diagnostics for ELIX OS",
+    "capabilities": [
+      "get_system_metrics",
+      "list_processes",
+      "kill_process",
+      "get_disk_io_stats",
+      "get_network_io_stats",
+      "get_system_overview"
+    ],
+    "permissions": [
+      "system:metrics",
+      "system:process",
+      "fs:read",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.studio3d",
+    "name": "ELIX 3D Studio",
+    "version": "1.0.0",
+    "category": "media",
+    "categoryLabel": "Media & 3D",
+    "icon": "🧊",
+    "description": "Professional WebGL 3D rendering pipeline, mesh inspection, and real-time shader studio for ELIX OS",
+    "capabilities": [
+      "load_model",
+      "set_viewport_shading",
+      "inspect_mesh_stats",
+      "set_environment_lighting",
+      "export_viewport_snapshot"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "ui:notification",
+      "ui:dialog",
+      "clipboard:read",
+      "clipboard:write"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.media",
+    "name": "ELIX Media",
+    "version": "1.0.0",
+    "category": "media",
+    "categoryLabel": "Media & 3D",
+    "icon": "🎵",
+    "description": "High-fidelity cinema video, audio waveform visualizer, and pan-and-zoom media inspector for ELIX OS",
+    "capabilities": [
+      "open_media",
+      "control_playback",
+      "inspect_media_info",
+      "generate_thumbnail_strip",
+      "set_image_transform"
+    ],
+    "permissions": [
+      "fs:read",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.mediastudio",
+    "name": "ELIX Media Studio",
+    "version": "1.0.0",
+    "category": "media",
+    "categoryLabel": "Media & 3D",
+    "icon": "🎬",
+    "description": "Professional creative studio for image adjustments, precision audio/video trimming, and batch format conversion in ELIX OS",
+    "capabilities": [
+      "edit_image",
+      "crop_resize",
+      "trim_media",
+      "convert_format",
+      "export_asset"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.camera",
+    "name": "ELIX Camera & Recorder",
+    "version": "1.0.0",
+    "category": "media",
+    "categoryLabel": "Media & 3D",
+    "icon": "📷",
+    "description": "High-definition camera capture, multi-track audio/video recording, and teleprompter studio for ELIX OS",
+    "capabilities": [
+      "take_photo",
+      "start_video_recording",
+      "stop_video_recording",
+      "record_audio_clip",
+      "list_capture_devices",
+      "toggle_teleprompter"
+    ],
+    "permissions": [
+      "media:camera",
+      "media:microphone",
+      "fs:read",
+      "fs:write",
+      "ui:notification",
+      "ui:dialog",
+      "clipboard:read",
+      "clipboard:write"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.capture",
+    "name": "ELIX Capture",
+    "version": "1.0.0",
+    "category": "media",
+    "categoryLabel": "Media & 3D",
+    "icon": "🎥",
+    "description": "Professional screen snip, video recording, and real-time visual annotation suite for ELIX OS",
+    "capabilities": [
+      "capture_screen",
+      "start_screen_recording",
+      "stop_screen_recording",
+      "apply_annotation",
+      "get_capture_history"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "ui:notification",
+      "ui:dialog",
+      "clipboard:read",
+      "clipboard:write",
+      "media:capture"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.files",
+    "name": "ELIX Files",
+    "version": "1.0.0",
+    "category": "utilities",
+    "categoryLabel": "Utilities",
+    "icon": "📁",
+    "description": "Modern high-performance file manager and storage navigator with quick preview, archive utilities, and AI tool bindings",
+    "capabilities": [
+      "list_directory",
+      "search_files",
+      "inspect_file_metadata",
+      "manage_archive",
+      "get_storage_breakdown"
+    ],
+    "permissions": [
+      "fs:read",
+      "fs:write",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.clock",
+    "name": "ELIX Clock",
+    "version": "1.0.0",
+    "category": "utilities",
+    "categoryLabel": "Utilities",
+    "icon": "⏰",
+    "description": "Native World Clock, Alarm, Countdown Timer, and Precision Stopwatch suite for ELIX OS",
+    "capabilities": [
+      "set_alarm",
+      "start_timer",
+      "get_world_time"
+    ],
+    "permissions": [
+      "ui:notification",
+      "agent:memory"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.devices",
+    "name": "ELIX Devices",
+    "version": "1.0.0",
+    "category": "utilities",
+    "categoryLabel": "Utilities",
+    "icon": "🎧",
+    "description": "Hardware control hub for Bluetooth, Wi-Fi, multi-display monitors, audio mixers, and battery diagnostics on ELIX OS",
+    "capabilities": [
+      "scan_bluetooth_devices",
+      "toggle_bluetooth_state",
+      "scan_wifi_networks",
+      "configure_display",
+      "set_audio_device",
+      "get_battery_diagnostics"
+    ],
+    "permissions": [
+      "hardware:bluetooth",
+      "hardware:wifi",
+      "hardware:display",
+      "hardware:audio",
+      "system:power",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.settings",
+    "name": "ELIX Settings",
+    "version": "1.0.0",
+    "category": "utilities",
+    "categoryLabel": "Utilities",
+    "icon": "⚙️",
+    "description": "System preferences, appearance customization, security sandboxing, AI runtime limits, and cache management for ELIX OS",
+    "capabilities": [
+      "get_system_settings",
+      "update_setting",
+      "reset_settings_category",
+      "manage_permissions",
+      "clear_system_caches",
+      "export_configuration"
+    ],
+    "permissions": [
+      "system:settings",
+      "security:permissions",
+      "storage:cache",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.utilities",
+    "name": "ELIX Utilities",
+    "version": "1.0.0",
+    "category": "utilities",
+    "categoryLabel": "Utilities",
+    "icon": "🛠️",
+    "description": "Multi-tool Swiss army knife for developers and power users: Converter, QR Studio, Color Lab, Unicode Inspector, and Cryptographic Hasher",
+    "capabilities": [
+      "convert_units",
+      "generate_qr",
+      "compute_hash",
+      "inspect_color",
+      "lookup_unicode"
+    ],
+    "permissions": [
+      "ui:notification",
+      "clipboard:write"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.search",
+    "name": "ELIX Universal Search",
+    "version": "1.0.0",
+    "category": "ai",
+    "categoryLabel": "AI Extensions",
+    "icon": "🔍",
+    "description": "System-wide Spotlight / Raycast command bar and fuzzy search index for applications, documents, settings, and math calculations",
+    "capabilities": [
+      "query_universal_index",
+      "execute_action_shortcut",
+      "evaluate_quick_calculation",
+      "rebuild_search_index",
+      "get_recent_searches"
+    ],
+    "permissions": [
+      "system:search_index",
+      "fs:read",
+      "app:launch",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  },
+  {
+    "id": "com.elix.appcenter",
+    "name": "ELIX App Center",
+    "version": "1.0.0",
+    "category": "ai",
+    "categoryLabel": "AI Extensions",
+    "icon": "🛍️",
+    "description": "App store, package manager, and extension registry for discovering and installing .ELIXAPP bundles on ELIX OS",
+    "capabilities": [
+      "list_installed_apps",
+      "search_store_catalog",
+      "install_elixapp",
+      "uninstall_elixapp",
+      "check_for_updates",
+      "inspect_package_manifest"
+    ],
+    "permissions": [
+      "system:package_management",
+      "fs:read",
+      "fs:write",
+      "network:download",
+      "ui:notification"
+    ],
+    "hasUpdate": false
+  }
+];
+
     let ws = null;
+    let currentSection = 'discover';
+    let currentCategory = null;
+    let currentDrawerAppId = null;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderAppCards(appList, isUpdateView = false) {
+      const grid = document.getElementById('cardGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const subtitle = document.getElementById('catalogSubtitle');
+      if (subtitle) {
+        subtitle.textContent = appList.length + ' package' + (appList.length === 1 ? '' : 's') + ' displayed · Verified Sandbox';
+      }
+
+      if (!appList || appList.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        
+        const emptyMsg = document.createElement('div');
+        emptyMsg.textContent = '🔍 No applications found matching your criteria.';
+        empty.appendChild(emptyMsg);
+
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'action-btn btn-install';
+        resetBtn.textContent = 'Browse All Applications';
+        resetBtn.onclick = () => switchSection('discover');
+        empty.appendChild(resetBtn);
+
+        grid.appendChild(empty);
+        return;
+      }
+
+      appList.forEach(app => {
+        const card = document.createElement('div');
+        card.className = 'app-card';
+        card.onclick = () => openDrawer(app.id);
+
+        const cardTop = document.createElement('div');
+        cardTop.className = 'card-top';
+
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'card-icon';
+        iconDiv.textContent = app.icon || '📦';
+
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'card-meta';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'card-name';
+        nameSpan.textContent = app.name;
+
+        const subSpan = document.createElement('span');
+        subSpan.className = 'card-sub';
+        subSpan.textContent = app.description;
+
+        metaDiv.appendChild(nameSpan);
+        metaDiv.appendChild(subSpan);
+        cardTop.appendChild(iconDiv);
+        cardTop.appendChild(metaDiv);
+
+        const cardBottom = document.createElement('div');
+        cardBottom.className = 'card-bottom';
+
+        const badgeSpan = document.createElement('span');
+        badgeSpan.style.fontSize = '10px';
+        badgeSpan.style.fontFamily = 'var(--font-mono)';
+
+        const actionBtn = document.createElement('button');
+        actionBtn.className = 'action-btn';
+
+        if (isUpdateView && app.hasUpdate) {
+          badgeSpan.style.color = 'var(--primary-cyan)';
+          badgeSpan.textContent = 'v' + app.version + ' ➔ v' + (app.updateVersion || '1.1.0');
+          actionBtn.className += ' btn-update';
+          actionBtn.textContent = 'Update';
+          actionBtn.onclick = (e) => {
+            e.stopPropagation();
+            performUpdate(app.id);
+          };
+        } else {
+          badgeSpan.style.color = 'var(--accent-emerald)';
+          badgeSpan.textContent = 'v' + app.version + ' · ' + app.categoryLabel;
+          actionBtn.className += ' btn-open';
+          actionBtn.textContent = 'Launch';
+          actionBtn.onclick = (e) => {
+            e.stopPropagation();
+            launchApp(app.id);
+          };
+        }
+
+        cardBottom.appendChild(badgeSpan);
+        cardBottom.appendChild(actionBtn);
+
+        card.appendChild(cardTop);
+        card.appendChild(cardBottom);
+        grid.appendChild(card);
+      });
+    }
+
+    function setActiveSidebar(selector) {
+      document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+      if (selector) {
+        const item = document.querySelector(selector);
+        if (item) item.classList.add('active');
+      }
+    }
+
+    function switchSection(sec) {
+      currentSection = sec;
+      currentCategory = null;
+
+      const searchInput = document.getElementById('searchBox');
+      if (searchInput) searchInput.value = '';
+
+      setActiveSidebar('.sidebar .nav-item[data-section="' + sec + '"]');
+
+      const title = document.getElementById('sectionTitle');
+      const hero = document.getElementById('heroBanner');
+
+      if (sec === 'discover') {
+        if (hero) hero.style.display = 'flex';
+        if (title) title.textContent = 'Popular Applications';
+        renderAppCards(APP_CATALOG);
+      } else if (sec === 'installed') {
+        if (hero) hero.style.display = 'none';
+        if (title) title.textContent = 'Installed Applications (' + APP_CATALOG.length + ' Mounted)';
+        renderAppCards(APP_CATALOG);
+      } else if (sec === 'updates') {
+        if (hero) hero.style.display = 'none';
+        if (title) title.textContent = 'Package Updates (2 Available)';
+        const updateApps = APP_CATALOG.filter(a => a.hasUpdate);
+        renderAppCards(updateApps.length ? updateApps : APP_CATALOG, true);
+      }
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      const searchInput = document.getElementById('searchBox');
+      if (searchInput) searchInput.value = '';
+
+      setActiveSidebar('.sidebar .nav-item[data-category="' + cat + '"]');
+
+      const hero = document.getElementById('heroBanner');
+      if (hero) {
+        hero.style.display = (cat === 'media') ? 'flex' : 'none';
+      }
+
+      const catLabels = {
+        productivity: 'Productivity',
+        developer: 'Dev Tools',
+        media: 'Media & 3D',
+        utilities: 'Utilities',
+        ai: 'AI Extensions'
+      };
+
+      const title = document.getElementById('sectionTitle');
+      const label = catLabels[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
+      const filtered = APP_CATALOG.filter(app => app.category === cat);
+
+      if (title) title.textContent = 'Category: ' + label + ' (' + filtered.length + ')';
+      renderAppCards(filtered);
+    }
 
     function openDrawer(appId) {
+      currentDrawerAppId = appId;
       const drawer = document.getElementById('detailDrawer');
-      const name = document.getElementById('drawerAppName');
-      if (name) name.textContent = appId;
+      const app = APP_CATALOG.find(a => a.id === appId);
+
+      const nameEl = document.getElementById('drawerAppName');
+      const descEl = document.getElementById('drawerDesc');
+      const capsEl = document.getElementById('drawerCaps');
+      const permsEl = document.getElementById('drawerPerms');
+      const launchBtn = document.getElementById('drawerLaunchBtn');
+
+      if (app) {
+        if (nameEl) nameEl.textContent = app.name;
+        if (descEl) descEl.textContent = app.description;
+        if (capsEl) {
+          capsEl.innerHTML = app.capabilities && app.capabilities.length
+            ? app.capabilities.map(c => '• ' + escapeHtml(c)).join('<br />')
+            : '• app_capability_runner<br />• app_inspect_metadata';
+        }
+        if (permsEl) {
+          permsEl.innerHTML = app.permissions && app.permissions.length
+            ? app.permissions.map(p => '• ' + escapeHtml(p)).join(' · ')
+            : '• fs:read · ui:notification';
+        }
+        if (launchBtn) {
+          launchBtn.textContent = 'Launch ' + app.name;
+          launchBtn.onclick = () => launchApp(app.id);
+        }
+      } else {
+        if (nameEl) nameEl.textContent = appId;
+        if (descEl) descEl.textContent = 'Verified ELIX application sandbox package.';
+        if (launchBtn) {
+          launchBtn.textContent = 'Launch Application';
+          launchBtn.onclick = () => launchApp(appId);
+        }
+      }
+
       if (drawer) drawer.classList.add('drawer-open');
     }
 
     function closeDrawer() {
       const drawer = document.getElementById('detailDrawer');
       if (drawer) drawer.classList.remove('drawer-open');
+      currentDrawerAppId = null;
     }
 
-    function switchSection(sec) {
+    function launchCurrentDrawerApp() {
+      if (currentDrawerAppId) {
+        launchApp(currentDrawerAppId);
+      }
+    }
+
+    function launchApp(appId) {
+      const app = APP_CATALOG.find(a => a.id === appId);
+      const appName = app ? app.name : appId;
+      console.log('[ELIX App Center] Launching application:', appId, appName);
+
+      showLaunchFeedback(appId, appName);
+
+      // 1. Send WebSocket IPC request
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'LAUNCH_APP', appId: appId }));
+        } catch (e) {
+          console.warn('[ELIX App Center] ws.send failed:', e);
+        }
+      }
+
+      // 2. Send Electron IPC Renderer request
+      try {
+        if (window.electron && window.electron.ipcRenderer) {
+          window.electron.ipcRenderer.send('launch-app', appId);
+          window.electron.ipcRenderer.send('LAUNCH_APP', appId);
+        } else if (typeof window !== 'undefined' && window.require) {
+          const ipc = window.require('electron').ipcRenderer;
+          ipc.send('launch-app', appId);
+          ipc.send('LAUNCH_APP', appId);
+        }
+      } catch (e) {
+        console.warn('[ELIX App Center] ipcRenderer failed:', e);
+      }
+    }
+
+    function performUpdate(appId) {
+      const app = APP_CATALOG.find(a => a.id === appId);
+      const appName = app ? app.name : appId;
+      showLaunchFeedback(appId, 'Updating ' + appName);
+      setTimeout(() => {
+        if (app) {
+          app.hasUpdate = false;
+          if (app.updateVersion) app.version = app.updateVersion;
+        }
+        const badge = document.getElementById('badgeUpdates');
+        const remaining = APP_CATALOG.filter(a => a.hasUpdate).length;
+        if (badge) badge.textContent = String(remaining);
+        switchSection('updates');
+      }, 1200);
+    }
+
+    function showLaunchFeedback(appId, label) {
+      const hudStatus = document.getElementById('hudStatus');
+      const hudFill = document.getElementById('hudProgressFill');
+      const hudBadge = document.getElementById('hudBadge');
+
+      if (hudStatus) hudStatus.textContent = 'Launching ' + label + '...';
+      if (hudFill) hudFill.style.width = '20%';
+      if (hudBadge) hudBadge.textContent = 'SPAWNING';
+
+      setTimeout(() => {
+        if (hudFill) hudFill.style.width = '100%';
+        if (hudBadge) hudBadge.textContent = 'RUNNING';
+      }, 300);
+
+      setTimeout(() => {
+        if (hudStatus) hudStatus.textContent = 'Verified Package Cache: Ready';
+        if (hudBadge) hudBadge.textContent = 'SHA-256 OK';
+      }, 2500);
+    }
+
+    // Live Search Filter Handler
+    function handleSearchInput(query) {
+      const q = query.trim().toLowerCase();
+      const hero = document.getElementById('heroBanner');
+      const title = document.getElementById('sectionTitle');
+
+      if (!q) {
+        if (currentCategory) {
+          filterCategory(currentCategory);
+        } else {
+          switchSection(currentSection);
+        }
+        return;
+      }
+
+      if (hero) hero.style.display = 'none';
       document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
-      const title = document.getElementById('sectionTitle');
-      if (title) title.textContent = sec.charAt(0).toUpperCase() + sec.slice(1) + ' Packages';
-    }
 
-    function filterCategory(cat) {
-      const title = document.getElementById('sectionTitle');
-      if (title) title.textContent = 'Category: ' + cat.charAt(0).toUpperCase() + cat.slice(1);
+      const matches = APP_CATALOG.filter(app => {
+        return app.name.toLowerCase().includes(q) ||
+          app.description.toLowerCase().includes(q) ||
+          app.id.toLowerCase().includes(q) ||
+          app.categoryLabel.toLowerCase().includes(q);
+      });
+
+      if (title) title.textContent = 'Search Results for "' + escapeHtml(query) + '" (' + matches.length + ')';
+      renderAppCards(matches);
     }
 
     // WebSocket IPC Bus
@@ -777,7 +1435,18 @@
         ws = new WebSocket('ws://127.0.0.1:7391');
         ws.onopen = () => {
           console.log('[ELIX App Center] Connected to IPC bus at ws://127.0.0.1:7391');
+          const statusEl = document.getElementById('statusWs');
+          if (statusEl) statusEl.textContent = 'ws://127.0.0.1:7391 Connected';
+          try {
+            ws.send(JSON.stringify({ type: 'REGISTER', appId: 'com.elix.appcenter' }));
+          } catch(e) {}
         };
+        ws.onclose = () => {
+          const statusEl = document.getElementById('statusWs');
+          if (statusEl) statusEl.textContent = 'ws://127.0.0.1:7391 Reconnecting...';
+          setTimeout(initWebSocket, 2000);
+        };
+        ws.onerror = () => {};
         ws.onmessage = (evt) => {
           try {
             const data = JSON.parse(evt.data);
@@ -799,22 +1468,33 @@
 
         switch (capability) {
           case 'list_installed_apps':
-            result.count = 18;
-            result.apps = [
-              { id: 'com.elix.notes', name: 'ELIX Notes', category: 'productivity' },
-              { id: 'com.elix.code', name: 'ELIX Code', category: 'developer' },
-              { id: 'com.elix.sysmon', name: 'ELIX System Monitor', category: 'utilities' },
-              { id: 'com.elix.devices', name: 'ELIX Devices', category: 'system' }
-            ];
+            result.count = APP_CATALOG.length;
+            result.apps = APP_CATALOG.map(a => ({
+              id: a.id,
+              name: a.name,
+              category: a.category,
+              version: a.version,
+              icon: a.icon
+            }));
             break;
 
-          case 'search_store_catalog':
+          case 'search_store_catalog': {
+            const query = (params?.query || '').toLowerCase();
+            const filtered = APP_CATALOG.filter(a =>
+              a.name.toLowerCase().includes(query) ||
+              a.description.toLowerCase().includes(query) ||
+              a.id.toLowerCase().includes(query)
+            );
             result.query = params?.query || '';
-            result.results = [
-              { id: 'com.elix.studio3d', name: 'ELIX 3D Studio', downloads: 14200 },
-              { id: 'com.elix.mediastudio', name: 'ELIX Media Studio', downloads: 9800 }
-            ];
+            result.results = filtered.map(a => ({
+              id: a.id,
+              name: a.name,
+              category: a.category,
+              version: a.version,
+              downloads: 14000
+            }));
             break;
+          }
 
           case 'install_elixapp':
             result.packagePath = params?.packagePathOrUrl;
@@ -827,13 +1507,34 @@
             break;
 
           case 'check_for_updates':
-            result.updatesAvailable = [];
+            result.updatesAvailable = APP_CATALOG.filter(a => a.hasUpdate).map(a => ({
+              id: a.id,
+              name: a.name,
+              currentVersion: a.version,
+              availableVersion: a.updateVersion || '1.1.0'
+            }));
             break;
 
-          case 'inspect_package_manifest':
-            result.packageId = params?.packageIdOrBundlePath;
-            result.manifest = { version: '1.0.0', permissions: ['fs:read', 'ui:notification'] };
+          case 'inspect_package_manifest': {
+            const targetId = params?.packageIdOrBundlePath || params?.packageId || '';
+            const found = APP_CATALOG.find(a => a.id === targetId || a.name.toLowerCase() === targetId.toLowerCase());
+            if (found) {
+              result.packageId = found.id;
+              result.manifest = {
+                id: found.id,
+                name: found.name,
+                version: found.version,
+                category: found.category,
+                description: found.description,
+                capabilities: found.capabilities,
+                permissions: found.permissions
+              };
+            } else {
+              result.packageId = targetId;
+              result.manifest = { version: '1.0.0', permissions: ['fs:read', 'ui:notification'] };
+            }
             break;
+          }
         }
 
         if (ws && ws.readyState === WebSocket.OPEN && invocationId) {
@@ -850,6 +1551,10 @@
     function sendNativeWindowCommand(channel) {
       if (window.electron && window.electron.ipcRenderer) {
         window.electron.ipcRenderer.send(channel);
+      } else if (typeof window !== 'undefined' && window.require) {
+        try {
+          window.require('electron').ipcRenderer.send(channel);
+        } catch(e) {}
       } else if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'window_action', action: channel }));
       }
@@ -857,6 +1562,24 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initWebSocket();
+      switchSection('discover');
+
+      const searchBox = document.getElementById('searchBox');
+      if (searchBox) {
+        searchBox.addEventListener('input', (e) => {
+          handleSearchInput(e.target.value);
+        });
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+          e.preventDefault();
+          if (searchBox) {
+            searchBox.focus();
+            searchBox.select();
+          }
+        }
+      });
     });
   </script>
   <script>
@@ -895,15 +1618,15 @@
         document.getElementById("btnClose")?.addEventListener("click", () => sendAction("close"));
 
         // Declarative tab routing
-        const navButtons = document.querySelectorAll("[data-tab], [data-target], [data-view], .nav-item, .tab-btn");
+        const navButtons = document.querySelectorAll("[data-tab], [data-target], [data-view]");
         navButtons.forEach(btn => {
           if (btn.__elix_tab_bound) return;
           btn.__elix_tab_bound = true;
           btn.addEventListener("click", (e) => {
-            const targetId = btn.getAttribute("data-tab") || btn.getAttribute("data-target") || btn.getAttribute("data-view") || btn.getAttribute("href")?.replace(/^#/, "");
+            const targetId = btn.getAttribute("data-tab") || btn.getAttribute("data-target") || btn.getAttribute("data-view");
             if (!targetId) return;
             const container = btn.closest("nav, .sidebar, .tab-bar, .sub-nav, .activity-rail, .nav-tabs, .tabs") || btn.parentElement || document;
-            container.querySelectorAll(".nav-item, .tab-btn, button, a").forEach(b => b.classList.remove("active"));
+            container.querySelectorAll("[data-tab], [data-target], [data-view]").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
 
             const parentViewScope = btn.closest(".app-container, .main-container, .center-workspace, .workspace, main, body") || document;

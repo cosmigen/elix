@@ -1,0 +1,36 @@
+{
+  "appId": "com.elix.desktop",
+  "productName": "ELIX OS",
+  "electronVersion": "44.2.0",
+  "directories": {
+    "output": "dist-installer"
+  },
+  "files": [
+    "dist/**/*",
+    "src/desktop-entry.cjs",
+    "src/native-shell.cjs",
+    "demo-apps/**/*",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "src/desktop-entry.cjs",
+    "version": "2.0.0"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "runAfterFinish": true
+  }
+}

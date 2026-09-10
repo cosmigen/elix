@@ -71,7 +71,8 @@
     "tui": "tsx src/tui/test-harness.ts",
     "host": "tsx src/host-service.ts",
     "demo": "tsx src/tui/automated-demo.ts",
-    "showcase": "powershell -ExecutionPolicy Bypass -File run-visible-demo.ps1"
+    "showcase": "powershell -ExecutionPolicy Bypass -File run-visible-demo.ps1",
+    "dist:win": "electron-builder --config electron-builder.json --win"
   },
   "keywords": [
     "elix",
@@ -109,7 +110,8 @@
     "@types/node": "^20.14.9",
     "@types/semver": "^7.5.8",
     "@types/ws": "^8.5.10",
-    "electron": "^44.2.0",
+    "electron": "44.2.0",
+    "electron-builder": "^26.15.3",
     "tsx": "^4.19.0",
     "typescript": "^5.5.2"
   }

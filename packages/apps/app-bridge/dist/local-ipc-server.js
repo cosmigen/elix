@@ -278,6 +278,10 @@ export class LocalIpcServer extends EventEmitter {
     handleIncomingPacket(packet, clientConn) {
         if (!packet || typeof packet !== 'object')
             return;
+        if (packet.type === 'LAUNCH_APP' || packet.action === 'LAUNCH_APP') {
+            this.broadcast(packet);
+            this.emit('launch_app', packet.appId, packet);
+        }
         // Check for JSON-RPC 2.0 tools/call or sys_exec_code execution request
         if (packet.jsonrpc === '2.0' || packet.method) {
             if ((packet.method === 'tools/call' && (packet.params?.name === 'sys_exec_code' || packet.params?.tool === 'sys_exec_code')) ||
